@@ -1,0 +1,15 @@
+{
+  "name": "Gloo",
+  "version": "0.0.1",
+  "ignore": [
+  ],
+  "authors": [
+    "Shukri Adams <shukri.adams@gmail.com>"
+  ],
+    "dependencies": {
+        "requirejs": "~2.1.16"
+    },
+  "license": "MIT",
+  "description": "A build script and pattern for frontend modules.",
+  "private": false
+}

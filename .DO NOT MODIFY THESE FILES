@@ -1,0 +1,4 @@
+These files are part of Gloo's internal build system. Under normal operation, Gloo updates
+itself, which may overwrite any changes you make to these internal files. You can of course
+change these files if know what you're doing, but normally Gloo should be
+configured and customized from files in the /dev folder.

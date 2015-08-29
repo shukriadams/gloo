@@ -1,0 +1,19 @@
+{
+  "componentFolder" : "../work/stage/__components",
+  "componentJsonFolder" : "",
+  "componentJsFolder" : "",
+  "componentSassFolder" : "",
+  "assembleFolder" : "../work/assemble",
+  "devFolder" : "../work",
+  "masterJSFolder" : "../work/stage/__js",
+  "buildFolder" : "../work/stage",
+  "releaseFolder" : "../release",
+  "tempFolder" : "temp",
+  "sassBuildStages" : [ "-settings", "-mixins" ],
+  "components":[],
+  "requireConfig" : {
+    "shims": { }
+  },
+  "requireConfigDev" : { },
+  "gruntConfig" : {}
+}
