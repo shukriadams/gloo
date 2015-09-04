@@ -105,6 +105,10 @@ module.exports = function(grunt) {
             }
         },
 
+        clean: {
+            default :[ glooConfig.tempFolder + '/**/*.*']
+        },
+
         concat: {
             base : {
                 // js components will be added to this dynamically by transform-js task
@@ -130,7 +134,7 @@ module.exports = function(grunt) {
 
     grunt.initConfig(glooConfig);
 
-
+    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-compass');
     grunt.loadNpmTasks('grunt-contrib-copy');
@@ -141,34 +145,39 @@ module.exports = function(grunt) {
     grunt.loadTasks('tasks');
 
     grunt.registerTask('default', ['dev']);
+    grunt.registerTask('init', ['gloo-bower-components']);
     grunt.registerTask('update', ['auto_install', 'copy:update']);
     grunt.registerTask('dev', [
+        'clean:default',
         'bower',
-        'gloo:find-components',
-        'gloo:check-versions',
-        'gloo:build-require-configs:' + mode,
-        'gloo:build-js-concat-list:' + mode,
-        'gloo:build-master-sass',
+        'gloo-vendor-copy',
+        'gloo-resolve-components',
+        'gloo-check-versions',
+        'gloo-build-require-configs:' + mode,
+        'gloo-build-js-concat-list:' + mode,
+        'gloo-build-master-sass',
         'compass',
         'concat:base',
         'concat:pages',
         'assemble:site',
-        'gloo:build-page-scripts:' + mode,
+        'gloo-build-page-scripts:' + mode,
         'copy:uncompiled'
     ]);
     grunt.registerTask('release', [
+        'clean:default',
         'bower',
-        'gloo:find-components',
-        'gloo:check-versions',
-        'gloo:build-require-configs:' + mode,
-        'gloo:build-js-concat-list:' + mode,
-        'gloo:build-master-sass',
+        'gloo-vendor-copy',
+        'gloo-resolve-components',
+        'gloo-check-versions',
+        'gloo-build-require-configs:' + mode,
+        'gloo-build-js-concat-list:' + mode,
+        'gloo-build-master-sass',
         'compass',
         // concat doesnt' always pick up dynamic js files, try to do it as late as possible
         'concat:base',
         'concat:pages',
         'assemble:site',
-        'gloo:build-page-scripts:' + mode,
+        'gloo-build-page-scripts:' + mode,
         'copy:compiled'
     ]);
 

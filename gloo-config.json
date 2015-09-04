@@ -8,6 +8,8 @@
   "masterJSFolder" : "../work/stage/__js",
   "buildFolder" : "../work/stage",
   "releaseFolder" : "../release",
+  "cssOutputFileName" : "gloo",
+  "releaseVendorScriptFolder" : "/js/vendor",
   "tempFolder" : "temp",
   "sassBuildStages" : [ "-settings", "-mixins" ],
   "components":[],
