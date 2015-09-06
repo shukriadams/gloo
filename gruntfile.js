@@ -23,14 +23,13 @@ module.exports = function(grunt) {
 
     var fs = require('fs'),
         _ = require("lodash"),
-        glooConfig = grunt.file.readJSON('gloo-config.json'),
-        devFolder = glooConfig.devFolder;
+        glooConfig = grunt.file.readJSON('gloo-config.json');
 
 
     // if config was not passed in as commnandline arg, look for and load user overrides of Gloo settings.
     // This must be in a file '/work/gloo-settings.json' which we assume is adjacen to to gloo folder
     if (!glooConfigOverride){
-        glooConfigOverride = fs.existsSync(devFolder + '/gloo-config.json') ? grunt.file.readJSON(devFolder + '/gloo-config.json') : null;
+        glooConfigOverride = fs.existsSync('../gloo-config.json') ? grunt.file.readJSON('../gloo-config.json') : null;
         grunt.log.writeln('Using gloo from gloo-config.json override');
     }
 

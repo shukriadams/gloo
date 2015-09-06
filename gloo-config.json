@@ -1,14 +1,22 @@
 {
-  "componentFolder" : "../work/stage/__components",
+  "componentFolder" : "../dev/__components",
   "componentJsonFolder" : "",
   "componentJsFolder" : "",
   "componentSassFolder" : "",
-  "assembleFolder" : "../work/assemble",
-  "devFolder" : "../work",
-  "masterJSFolder" : "../work/stage/__js",
-  "buildFolder" : "../work/stage",
+  "assembleFolder" : "../assemble",
+  "masterJSFolder" : "../dev/__js",
+  "buildFolder" : "../dev",
   "releaseFolder" : "../release",
+
+  "_comment" : "Default style sheet output name.",
   "cssOutputFileName" : "gloo",
+
+  "_comment" : "Send modules' css output to specific style sheets if you want to split your site's CSS. Any module not listed here will be sent to the default style sheet.",
+  "cssOutputFiles" : { "myStyleSheet" : [  ] },
+
+  "_comment" : "Set to true to write intermediate css and other logging info to temp folder.",
+  "debug" : false,
+
   "releaseVendorScriptFolder" : "/js/vendor",
   "tempFolder" : "temp",
   "sassBuildStages" : [ "-settings", "-mixins" ],

@@ -1,3 +1,6 @@
+/*
+ *
+ * */
 
 'use strict';
 
@@ -8,14 +11,15 @@ module.exports = function(grunt) {
             fs = require('fs'),
             path = require('path'),
             fileUtils = require('./fileUtils'),
-            glooConfig = grunt.config('glooConfig');
+            glooConfig = grunt.config('glooConfig'),
+            resolvedComponents = fileUtils.findComponents(glooConfig.componentFolder);
 
         // create raw list of component sass file paths.
         for (var i = 0 ; i < glooConfig.components.length ; i ++){
-            var component = glooConfig.components[i];
-            var resolved = resolveComponent(component);
+            var component = glooConfig.components[i],
+                resolved = fileUtils.findComponent(resolvedComponents, path.basename(component));
             if (resolved){
-                components[component] = resolved;
+                components[resolved.name] = resolved;
             }
         }
 
@@ -29,9 +33,9 @@ module.exports = function(grunt) {
 
             for (var dependency in component.dependencies){
                 if (!components[dependency]){
-                    var resolved = resolveComponent(dependency);
+                    var resolved = fileUtils.findComponent(resolvedComponents, dependency);
                     if (resolved ){
-                        components[dependency] =resolved;
+                        components[resolved.name] =resolved;
                     }
                 }
             }
@@ -56,29 +60,6 @@ module.exports = function(grunt) {
                     grunt.fail.fatal('Component ' + componentName + ' depends on ' + componentDependency + ' version ' + requiredVersion + ', but version ' + availableVersion + ' was found.');
                 }
             }
-        }
-
-        function resolveComponent(component){
-            var componentFiles = fileUtils.getFilesIn(glooConfig.componentFolder + '/' + component);
-
-            // if component has dependencies file, load file and check validity
-            var componentDependencies,
-                version,
-                dependenciesFilePath = 'component.json';
-
-            if (componentFiles[dependenciesFilePath]){
-                var dependencyFile = grunt.file.readJSON(componentFiles[dependenciesFilePath].path);
-                componentDependencies = dependencyFile.dependencies || {};
-                version = dependencyFile.version;
-            }
-
-            var componentData = {
-                version : version,
-                dependencies : componentDependencies,
-                name : component
-            };
-
-            return componentData;
         }
 
     });

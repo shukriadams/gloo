@@ -17,15 +17,15 @@ module.exports = function(grunt) {
             for (var i = 0 ; i < glooConfig.components.length ; i ++){
                 var component = path.basename(glooConfig.components[i]),
                     componentReal = component + '.js',
-                    componentFiles = fileUtils.getFilesIn(glooConfig.componentFolder + '/' + glooConfig.components[i]);
+                    componentFiles = fileUtils.getFilesIn(path.join(glooConfig.componentFolder,glooConfig.components[i]));
 
                 if (componentFiles[componentReal]){
-                    array.push(glooConfig.componentFolder + '/' + glooConfig.components[i] + componentFiles[componentReal].relativePath + '.js');
+                    array.push(path.join(glooConfig.componentFolder, glooConfig.components[i]) + componentFiles[componentReal].relativePath + '.js');
                 }
             }
 
             // add overrides
-            var requireOverridesPath = glooConfig.tempFolder + '/js/require-pathOverrides-release.js';
+            var requireOverridesPath = path.join(glooConfig.tempFolder, 'js', 'require-pathOverrides-release.js');
             if (fs.existsSync(requireOverridesPath)){
                 array.push(requireOverridesPath);
             }
@@ -36,14 +36,14 @@ module.exports = function(grunt) {
             grunt.config.set('concat.base.src', merged);
 
             // write debug, this should be switchable
-            jf.writeFileSync(glooConfig.tempFolder + '/js/gloo-component-concatenate-list.json', merged);
+            jf.writeFileSync(path.join(glooConfig.tempFolder, 'js', 'gloo-component-concatenate-list.json'), merged);
         }
 
         // add parts to make the "page js" requirejs config.
         array= [];
-        array.push( glooConfig.tempFolder + '/js/require-component-mappings.js' );
-        array.push( glooConfig.tempFolder + '/js/require-custom-config.js' );
-        array.push( glooConfig.tempFolder + '/js/require-custom-config-dev.js' );
+        array.push( path.join(glooConfig.tempFolder, 'js', 'require-component-mappings.js' ));
+        array.push( path.join(glooConfig.tempFolder, 'js', 'require-custom-config.js' ));
+        array.push( path.join(glooConfig.tempFolder, 'js', 'require-custom-config-dev.js' ));
 
         // todo : refactor these awful  grunt config names
         var mergedPages = array.concat(grunt.config('concat').pages.src);

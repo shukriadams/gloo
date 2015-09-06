@@ -22,8 +22,7 @@ exports.getFilesIn = function(root){
     function _getFilesIn(currentPath){
         var items = fs.readdirSync(currentPath);
         for (var i = 0 ; i < items.length ; i ++){
-            var item = currentPath + '/' + items[i];
-
+            var item = path.join(currentPath, items[i]);
             // is directory
             if (fs.statSync(item).isDirectory()){
                 _getFilesIn(item);
@@ -54,6 +53,7 @@ exports.getFilesIn = function(root){
 exports.findComponents = function(root){
     var fs = require('fs'),
         path = require('path'),
+        jf = require('jsonfile'),
         componentFolders = [];
 
     _findComponentFolders(root);
@@ -61,13 +61,16 @@ exports.findComponents = function(root){
     function _findComponentFolders(dir){
 
         var items = fs.readdirSync(dir),
+            componentJson = null,
             isComponent = false;
 
         // first check for component.json in all files in this folder
         for (var i = 0 ; i < items.length ; i ++){
             // presence of ocmponent.json file flags folder as component root
-            if (items[i].toLowerCase() === 'component.json')
+            if (items[i].toLowerCase() === 'component.json'){
                 isComponent = true;
+                componentJson = jf.readFileSync(path.join(dir, items[i]));
+            }
         }
 
         if (isComponent){
@@ -79,7 +82,9 @@ exports.findComponents = function(root){
 
             componentFolders.push({
                 path : componentName,
-                name : path.dirname(path.basename(componentName))
+                version : componentJson.version,
+                dependencies : componentJson.dependencies || {},
+                name : path.basename(componentName)
             });
 
         } else {
@@ -87,12 +92,11 @@ exports.findComponents = function(root){
             // if not a component, recurse search in subfolders.
             // this prevents components being nested inside other components
             for (var i = 0 ; i < items.length ; i ++){
-                var item = dir + '/' + items[i];
+                var item = path.join(dir, items[i]);
 
                 // subdirectory found, recurse that
                 if (fs.statSync(item).isDirectory()){
                     _findComponentFolders(item);
-                    continue;
                 }
             }
 
@@ -102,6 +106,18 @@ exports.findComponents = function(root){
 
     return componentFolders;
 
+};
+
+
+/*
+ *
+ * */
+exports.findComponent = function(resolvedComponents, name){
+    for (var i = 0 ; i < resolvedComponents.length; i ++){
+        if (resolvedComponents[i].name === name)
+        return resolvedComponents[i];
+    }
+    return null;
 };
 
 

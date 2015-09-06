@@ -18,37 +18,38 @@ module.exports = function(grunt) {
             for (var i = 0 ; i < glooConfig.components.length ; i ++){
                 var component = path.basename(glooConfig.components[i]),
                     componentReal = component + '.js',
-                    componentFiles = fileUtils.getFilesIn(glooConfig.componentFolder + '/' + glooConfig.components[i]);
+                    componentFiles = fileUtils.getFilesIn(glooConfig.components[i]);
 
                 if (componentFiles[componentReal]){
-                    paths[component] = '/__components/' + glooConfig.components[i] + componentFiles[componentReal].relativePath;
+                    // TODO : lack of leading slash might break this path
+                    paths[component] = path.join('__components', glooConfig.components[i] + componentFiles[componentReal].relativePath);
                 }
             }
         } else {
             // in release mode, all components are concatenated into one file, which all components are mapped to
             for (var i = 0 ; i < glooConfig.components.length ; i ++){
                 var component = path.basename(glooConfig.components[i]);
-                paths[component] = '/js/gloo-components';
+                paths[component] = path.join('js', gloo-components);
             }
         }
 
         // create temp cache folders
-        fileUtils.ensureDirectory(glooConfig.tempFolder + '/js');
+        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'js'));
 
         // write component list.
         var glooComponentsFileContent = 'require.config({ paths : ' + JSON.stringify(paths) + ' });';
-        fs.writeFileSync( glooConfig.tempFolder + '/js/require-component-mappings.js', glooComponentsFileContent);
+        fs.writeFileSync( path.join(glooConfig.tempFolder, 'js', 'require-component-mappings.js'), glooComponentsFileContent);
 
         // if a custom requirejs config exists in project config, add this to own file
         if (glooConfig.requireConfig){
             var requireCustomConfig = "require.config(" + JSON.stringify(glooConfig.requireConfig) + ");";
-            fs.writeFileSync( glooConfig.tempFolder + '/js/require-custom-config.js', requireCustomConfig);
+            fs.writeFileSync( path.join(glooConfig.tempFolder, 'js', 'require-custom-config.js'), requireCustomConfig);
         }
 
         // if a custom requirejs dev config exists in project config, add this to own file
         if (glooConfig.requireConfigDev){
             var requireCustomConfigDev = "require.config(" + JSON.stringify(glooConfig.requireConfigDev) + ");";
-            fs.writeFileSync( glooConfig.tempFolder + '/js/require-custom-config-dev.js', requireCustomConfigDev);
+            fs.writeFileSync( path.join( glooConfig.tempFolder, 'js', 'require-custom-config-dev.js'), requireCustomConfigDev);
         }
     });
 
