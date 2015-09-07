@@ -128,9 +128,6 @@ module.exports = function(grunt) {
 
     };
 
-    // allow grunt settings overrides to be passed in from parent
-    _.extend(glooConfig, glooConfigOverride.gruntConfig);
-
     grunt.initConfig(glooConfig);
 
     grunt.loadNpmTasks('grunt-contrib-clean');
