@@ -56,8 +56,7 @@ module.exports = function(grunt) {
         fileUtils.ensureDirectory(vendorFolder);
 
         var releasePathOverwrites ={},
-            devPathOverwrites ={},
-            devRoot = glooConfig.componentFolder.replace(glooConfig.buildFolder, '');
+            devPathOverwrites ={};
 
         // copy all declared script files to vender folder
         for (var i = 0 ; i < requires.length ; i ++){
@@ -71,11 +70,10 @@ module.exports = function(grunt) {
                     // copy vendor files to global vendor folder, if in release mode
                     if (mode === 'release' && config.toLowerCase() === 'paths'){
                         var p = path.join(requires[i].component.path, requires[i].configs[config][moduleName] + '.js');
-                        p = path.join(glooConfig.componentFolder, p);
-
                         var targetPath = path.join(glooConfig.releaseFolder, glooConfig.releaseVendorScriptFolder);
-                        targetPath = path.join(targetPath, moduleName+ '.js');
+                        targetPath = path.join(targetPath, moduleName + '.js');
                         fs.writeFileSync(targetPath, fs.readFileSync(p));
+                        grunt.verbose.writeln('Copied vendor lib ' + moduleName + ' to ' + targetPath);
                     }
 
                     if (config.toLowerCase() === 'paths'){
@@ -84,7 +82,8 @@ module.exports = function(grunt) {
 
                         // for dev mode, complete the module path (initially it's relative to component folder), it needs to
                         // be relative to webroot.
-                        devPathOverwrites.paths[moduleName] = path.join( devRoot, requires[i].component.path, requires[i].configs[config][moduleName]) ;
+                        var p = requires[i].component.path.replace(glooConfig.buildFolder.replace(/\//g, '\\'), '');
+                        devPathOverwrites.paths[moduleName] = path.join(/*devRoot,*/ p, requires[i].configs[config][moduleName]).replace(/\\/g, "/") ;
                     } else {
                         // straight copy anything that isn't path
                         releasePathOverwrites[config][moduleName] = requires[i].configs[config][moduleName];

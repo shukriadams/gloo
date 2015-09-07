@@ -15,6 +15,7 @@
     "grunt-contrib-concat" : "~0.5.1",
     "grunt-auto-install" : "~0.2.4",
     "jsonfile " : "~2.0.0",
+    "mkdirp" : "0.5.1",
     "lodash" : "~3.5.0"
   },
   "scripts": {

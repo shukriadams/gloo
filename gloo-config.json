@@ -17,7 +17,7 @@
   "_comment" : "Set to true to write intermediate css and other logging info to temp folder.",
   "debug" : false,
 
-  "releaseVendorScriptFolder" : "/js/vendor",
+  "releaseVendorScriptFolder" : "/lib",
   "tempFolder" : "temp",
   "sassBuildStages" : [ "-settings", "-mixins" ],
   "components":[],

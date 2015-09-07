@@ -9,18 +9,19 @@ module.exports = function(grunt) {
             fileUtils = require('./fileUtils'),
             jf = require('jsonfile'),
             fs = require('fs'),
-            glooConfig = grunt.config('glooConfig');
+            glooConfig = grunt.config('glooConfig'),
+            components = fileUtils.findComponents(glooConfig.componentFolder);
 
         // build list for all components for gloo-components, in release mode only
         if (mode === 'release'){
 
-            for (var i = 0 ; i < glooConfig.components.length ; i ++){
-                var component = path.basename(glooConfig.components[i]),
-                    componentReal = component + '.js',
-                    componentFiles = fileUtils.getFilesIn(path.join(glooConfig.componentFolder,glooConfig.components[i]));
+            for (var i = 0 ; i < components.length ; i ++){
+                var component = components[i],
+                    componentJSFile = component.name + '.js',
+                    componentFiles = fileUtils.getFilesIn(component.diskPath);
 
-                if (componentFiles[componentReal]){
-                    array.push(path.join(glooConfig.componentFolder, glooConfig.components[i]) + componentFiles[componentReal].relativePath + '.js');
+                if (componentFiles[componentJSFile]){
+                    array.push(componentFiles[componentJSFile].path);
                 }
             }
 

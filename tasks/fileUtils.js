@@ -15,17 +15,17 @@ exports.getFilesIn = function(root){
         path = require('path'),
         result = {};
 
-    _getFilesIn(root);
+    _getFilesIn(root, '');
 
     return result;
 
-    function _getFilesIn(currentPath){
+    function _getFilesIn(currentPath, webPath){
         var items = fs.readdirSync(currentPath);
         for (var i = 0 ; i < items.length ; i ++){
             var item = path.join(currentPath, items[i]);
             // is directory
             if (fs.statSync(item).isDirectory()){
-                _getFilesIn(item);
+                _getFilesIn(item, webPath + '/' + path.basename(item));
                 continue;
             }
 
@@ -35,8 +35,17 @@ exports.getFilesIn = function(root){
             if (extension)
                 relativePath = relativePath.substr(0, relativePath.length - extension.length);
 
+            // Calculate require path for js files. this path is relative to the component folder.
+            // It needs the component's path relative to webroot for a complete path
+            var requirePath = null;
+            if (extension === '.js'){
+                requirePath = webPath + '/' + path.basename(item);
+                requirePath = requirePath.substr(0,requirePath.length -3 ); // clip extension off for valid require
+            }
+
             result[path.basename(item)] = {
-                path : item,
+                path : item, // refactor to "diskPath"
+                requirePath : requirePath,
                 extension : extension,
                 relativePath : relativePath
             };
@@ -56,9 +65,9 @@ exports.findComponents = function(root){
         jf = require('jsonfile'),
         componentFolders = [];
 
-    _findComponentFolders(root);
+    _findComponentFolders(root, '');
 
-    function _findComponentFolders(dir){
+    function _findComponentFolders(dir, webPath){
 
         var items = fs.readdirSync(dir),
             componentJson = null,
@@ -82,7 +91,9 @@ exports.findComponents = function(root){
 
             componentFolders.push({
                 path : componentName,
+                diskPath : dir,
                 version : componentJson.version,
+                requirePath : webPath + '/' + path.basename(dir),
                 dependencies : componentJson.dependencies || {},
                 name : path.basename(componentName)
             });
@@ -96,7 +107,7 @@ exports.findComponents = function(root){
 
                 // subdirectory found, recurse that
                 if (fs.statSync(item).isDirectory()){
-                    _findComponentFolders(item);
+                    _findComponentFolders(item, webPath + '/' + path.basename(dir));
                 }
             }
 
@@ -126,8 +137,9 @@ exports.findComponent = function(resolvedComponents, name){
  * */
 exports.ensureDirectory = function(dir){
     var fs = require('fs');
-    
+    var mkdirp = require('mkdirp');
+
     if (!fs.existsSync(dir)){
-        fs.mkdirSync(dir);
+        mkdirp.sync(dir);
     }
 };

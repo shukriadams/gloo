@@ -27,7 +27,7 @@ module.exports = function(grunt) {
 
             // add overrides
             var requireOverrides = '',
-                requireOverridesPath = path.join(glooConfig.tempFolder, 'js', 'srequire-pathOverrides-dev.js');
+                requireOverridesPath = path.join(glooConfig.tempFolder, 'js', 'require-pathOverrides-dev.js');
 
             if (fs.existsSync(requireOverridesPath)){
                 requireOverrides = fs.readFileSync(requireOverridesPath).toString();

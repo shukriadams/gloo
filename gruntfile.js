@@ -146,7 +146,7 @@ module.exports = function(grunt) {
     grunt.registerTask('dev', [
         'clean:default',
         'bower',
-        'gloo-vendor-copy',
+        'gloo-vendor-copy:' + mode,
         'gloo-resolve-components',
         'gloo-check-versions',
         'gloo-build-require-configs:' + mode,
@@ -162,7 +162,7 @@ module.exports = function(grunt) {
     grunt.registerTask('release', [
         'clean:default',
         'bower',
-        'gloo-vendor-copy',
+        'gloo-vendor-copy:' + mode,
         'gloo-resolve-components',
         'gloo-check-versions',
         'gloo-build-require-configs:' + mode,
