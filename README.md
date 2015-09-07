@@ -1,5 +1,10 @@
-Gloo is a framwork for modular frontend end code, built on top of Assemble, Grunt and Sass. Use Gloo to make reusable, complex "frontend" modules which can easily
- be used across projects. Each module can exist in its own repository, and can be versioned.
+Gloo is a build script and preprocessor for modular frontend end code. It is built on top of Assemble (for markup, RequireJS (for Javascript) and Sass (for CSS). It is written in NodeJS and Grunt. 
+
+Use Gloo to structure your frontend code into folder-based components that have no implied knowledge of eachother. Gloo detects, compiles and "links" your Sass, Handlebar and Javascript dynamically - no module configuration is necessary. If you want one component's Sass to use a mixin, function or variable in another, a simple dependency link ensures the dependent component is compiled first. 
+
+Gloo supports semantic version coupling between dependent components.
+
+Gloo supports 3rd party Javascript dependencies within any component with Bower and RequireJS.
 
 **Site Structure**
 ------------------
