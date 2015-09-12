@@ -14,15 +14,18 @@ module.exports = function(grunt) {
             fileUtils = require('./fileUtils'),
             path = require('path'),
             glooConfig = grunt.config('glooConfig'),
-            resolvedComponents = fileUtils.findComponents(glooConfig.componentFolder);
+            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
+            pathBridge = fileUtils.findIntersect(fileUtils.absolutePath(glooConfig.componentFolder)),
+            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
         // create raw list of component sass file paths.
-        for (var i = 0 ; i < glooConfig.components.length ; i ++){
-            var component = glooConfig.components[i];
-            var resolved = resolveComponent(path.basename(component));
-            if (resolved){
-                components[resolved.name] = resolved;
+        for (var i = 0 ; i < resolvedComponents.length ; i ++){
+            var component = resolvedComponents[i];
+            var resolved = resolveComponent(component.name);
+            if (!resolved){
+                grunt.fail.fatal('Could not resolve expected component ' + component.name);
             }
+            components[resolved.name] = resolved;
         }
 
         // include implied dependencies
@@ -36,9 +39,10 @@ module.exports = function(grunt) {
             for (var dependency in component.dependencies){
                 if (!components[dependency]){
                     var resolved = resolveComponent(dependency);
-                    if (resolved ){
-                        components[resolved.name] = resolved;
+                    if (!resolved){
+                        grunt.fail.fatal('Could not resolve expected component ' + dependency);
                     }
+                    components[resolved.name] = resolved;
                 }
             }
         }
@@ -79,11 +83,11 @@ module.exports = function(grunt) {
             return a.order - b.order;
         });
 
-        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'scss'));
+        fileUtils.ensureDirectory(path.join(tempFolder, 'scss'));
 
         // write debug
         if (glooConfig.debug){
-            jf.writeFileSync( path.join(glooConfig.tempFolder, 'scss', 'gloo-scss-debug.json'), orderedComponents);
+            jf.writeFileSync( path.join(tempFolder, 'scss', 'gloo-scss-debug.json'), orderedComponents);
         }
 
         // build stages
@@ -108,7 +112,6 @@ module.exports = function(grunt) {
             var orderedComponent = orderedComponents[i];
 
             // try to find a css target file for component
-
             var cssOutFile = glooConfig.cssOutputFileName;
             for (var p in glooConfig.cssOutputFiles){
                 for (var j = 0 ; j < glooConfig.cssOutputFiles[p].length; j ++ ){
@@ -125,22 +128,23 @@ module.exports = function(grunt) {
             }
         }
 
+
         // create temp cache folders
-        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'scss'));
+        fileUtils.ensureDirectory(path.join(tempFolder, 'scss'));
 
         // write master sass import file
         for (var sassOutputfile in sass){
-            fs.writeFileSync( path.join(glooConfig.tempFolder, 'scss', sassOutputfile+ '.scss'), sass[sassOutputfile]);
+            fs.writeFileSync( path.join(tempFolder, 'scss', sassOutputfile+ '.scss'), sass[sassOutputfile]);
         }
 
         // Returns a component object for the given component name. returns null of component
         // main sass file doesn't exist (ie, componentName.scss)
         // Component name must be namespaced relative to the __components folder,
         // and is the raw value defined in the gloo-config.json master component list.
-
-        function resolveComponent(component){
-            var componentPath = fileUtils.findComponent(resolvedComponents, component).path,
-                componentFileName = path.basename(component),
+        function resolveComponent(componentName){
+            var component = fileUtils.findComponent(resolvedComponents, componentName),
+                componentPath = component.diskPath,
+                componentFileName = path.basename(componentName),
                 componentPathSassPath = componentFileName + '.scss',
                 componentPathSassPathPartial = '_' + componentFileName + '.scss',
                 componentFiles = fileUtils.getFilesIn(componentPath);
@@ -148,11 +152,10 @@ module.exports = function(grunt) {
             // fail if component file does not exist
             var sassFilePath = null;
             if (componentFiles[componentPathSassPath]){
-                sassFilePath = '../../' + componentFiles[componentPathSassPath].path;
+                sassFilePath =  '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath;
             } else if (componentFiles[componentPathSassPathPartial]){
-                sassFilePath = '../../' + componentFiles[componentPathSassPathPartial].path
+                sassFilePath ='../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPathPartial].relativePath;
             }
-
 
 
             // if component has dependencies file, load file and check validity
@@ -161,7 +164,7 @@ module.exports = function(grunt) {
                 dependenciesFilePath = 'component.json';
 
             if (componentFiles[dependenciesFilePath]){
-                var dependencyFile = grunt.file.readJSON(componentFiles[dependenciesFilePath].path);
+                var dependencyFile = grunt.file.readJSON(componentFiles[dependenciesFilePath].diskPath);
                 componentDependencies = dependencyFile.dependencies || {};
                 version = dependencyFile.version;
             }
@@ -190,10 +193,10 @@ module.exports = function(grunt) {
                         componentPathSassPathPartial = '_' + componentFileName + stage + ".scss";
 
                     if (componentFiles[componentPathSassPathPartial]){
-                        componentData.buildStages[stage] = '../../' + componentFiles[componentPathSassPathPartial].path.replace(/\\/g, "/");
+                        componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPathPartial].relativePath.replace(/\\/g, "/");
                     } else {
                         if (componentFiles[componentPathSassPath])
-                            componentData.buildStages[stage] = '../../' + componentFiles[componentPathSassPath].path.replace(/\\/g, "/");
+                            componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath.replace(/\\/g, "/");
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Divider to prettifying concatenated files
+ * Divider for prettifying concatenated files
  * */
 exports.divider = function(){
   return '// ==================================================================;';
@@ -7,8 +7,7 @@ exports.divider = function(){
 
 
 /*
- * Gets a list of all files nested under root folder. Returned objects contain
- * multiple properties for a given file.
+ * Gets a list of all files nested under root folder.
  * */
 exports.getFilesIn = function(root){
     var fs = require('fs'),
@@ -32,8 +31,6 @@ exports.getFilesIn = function(root){
             // is file
             var relativePath = item.replace(root, ''),
                 extension = path.extname(relativePath);
-            if (extension)
-                relativePath = relativePath.substr(0, relativePath.length - extension.length);
 
             // Calculate require path for js files. this path is relative to the component folder.
             // It needs the component's path relative to webroot for a complete path
@@ -44,8 +41,8 @@ exports.getFilesIn = function(root){
             }
 
             result[path.basename(item)] = {
-                path : item, // refactor to "diskPath"
-                requirePath : requirePath,
+                diskPath : item,            // absolute path of the file on disk
+                requirePath : requirePath,  // PARTIAL a js file needs to path to require. This must be conbined with component require path for a full require path
                 extension : extension,
                 relativePath : relativePath
             };
@@ -83,19 +80,19 @@ exports.findComponents = function(root){
         }
 
         if (isComponent){
-            var componentName = dir.replace(root, '');
+            var relativePath = dir.replace(root, '');
 
             // remove leading slash from path, component name is expected to start with directory name
-            if (componentName.indexOf('/') === 0 || componentName.indexOf('\\') === 0)
-                componentName = componentName.substr(1);
+            if (relativePath.indexOf('/') === 0 || relativePath.indexOf('\\') === 0)
+                relativePath = relativePath.substr(1);
 
             componentFolders.push({
-                path : componentName,
-                diskPath : dir,
+                relativePath : relativePath,                // path relative to app root
+                diskPath : dir,                     // absolute path of the file on disk
                 version : componentJson.version,
-                requirePath : webPath + '/' + path.basename(dir),
+                requirePath : webPath + '/' + path.basename(dir),   //
                 dependencies : componentJson.dependencies || {},
-                name : path.basename(componentName)
+                name : path.basename(relativePath)
             });
 
         } else {
@@ -121,7 +118,7 @@ exports.findComponents = function(root){
 
 
 /*
- *
+ * Finds a component by name, from the list of components (as returned by this.findComponents)
  * */
 exports.findComponent = function(resolvedComponents, name){
     for (var i = 0 ; i < resolvedComponents.length; i ++){
@@ -133,13 +130,73 @@ exports.findComponent = function(resolvedComponents, name){
 
 
 /*
- *
+ * Creates a path if it doesn't exist, regardless of depth.
  * */
-exports.ensureDirectory = function(dir){
+exports.ensureDirectory = function(path){
     var fs = require('fs');
     var mkdirp = require('mkdirp');
 
-    if (!fs.existsSync(dir)){
-        mkdirp.sync(dir);
+    if (!fs.existsSync(path)){
+        mkdirp.sync(path);
     }
+};
+
+
+// builds path bridge from path to point where gloo intersects
+exports.findIntersect = function(tracePath){
+    var path = require('path'),
+        output = '';
+
+    function split(p){
+        var result = [];
+        while (true){
+            var temp = path.join(p, '../');
+            if (temp === p)
+                break;
+            p = temp;
+            result.push(p);
+        }
+        return result;
+    }
+
+    var paths = split(__dirname);
+
+    while (true){
+
+        output = path.basename(tracePath) + '/' + output;
+
+        var temp = path.join(tracePath, '../');
+        if (temp === tracePath)
+            break;
+
+        tracePath = temp;
+        if (!!~paths.indexOf(tracePath))
+            return output;
+    }
+    throw 'failed to find path';
+};
+
+
+/*
+ * Converts a relative (partial) path to an absolute one (relative to drive root)
+ * */
+exports.absolutePath = function(relPath){
+    var path = require('path'),
+        runtimeRoot = path.join(__dirname, '/..');
+
+    return path.join(runtimeRoot, relPath);
+};
+
+
+/*
+ * Removes leading slash.
+ * */
+exports.noLeadSlash = function(path){
+    if (!path)
+        return path;
+
+    while(path.indexOf('/') === 0){
+        path = path.substr(1);
+    }
+    return path;
 };

@@ -5,17 +5,17 @@
 'use strict';
 
 module.exports = function(grunt) {
-    grunt.task.registerTask('gloo-bower-components', 'Initializes component bower dependencies', function() {
+    grunt.task.registerTask('gloo-bower-update', 'Initializes component bower dependencies', function() {
         var fileUtils = require('./fileUtils'),
             fs = require('fs'),
             glooConfig = grunt.config('glooConfig'),
             path = require('path'),
             sys = require('sys'),
             exec = require('child_process').execSync,
-            components = fileUtils.findComponents(glooConfig.componentFolder);
+            components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
         for (var i = 0 ; i < components.length ; i ++){
-            var folderPath = path.join(glooConfig.componentFolder, components[i].path),
+            var folderPath = components[i].diskPath,
                 bowerPath =  path.join(folderPath, 'bower.json');
 
             if (!fs.existsSync(bowerPath))

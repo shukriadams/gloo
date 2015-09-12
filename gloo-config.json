@@ -8,6 +8,9 @@
   "buildFolder" : "../dev",
   "releaseFolder" : "../release",
 
+  "_comment" : "In release mode, file component javascript files are concatenated to. Do not add an extension to this.",
+  "componentsConcatFile" : "gloo-components",
+
   "_comment" : "Default style sheet output name.",
   "cssOutputFileName" : "gloo",
 

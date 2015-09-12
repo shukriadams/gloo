@@ -5,22 +5,19 @@
 'use strict';
 
 module.exports = function(grunt) {
-    grunt.task.registerTask('gloo-check-versions', '', function(mode) {
+    grunt.task.registerTask('gloo-check-versions', '', function() {
 
         var components = {},
             fs = require('fs'),
             path = require('path'),
             fileUtils = require('./fileUtils'),
             glooConfig = grunt.config('glooConfig'),
-            resolvedComponents = fileUtils.findComponents(glooConfig.componentFolder);
+            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
         // create raw list of component sass file paths.
-        for (var i = 0 ; i < glooConfig.components.length ; i ++){
-            var component = glooConfig.components[i],
-                resolved = fileUtils.findComponent(resolvedComponents, path.basename(component));
-            if (resolved){
-                components[resolved.name] = resolved;
-            }
+        for (var i = 0 ; i < resolvedComponents.length ; i ++){
+            var component = resolvedComponents[i];
+            components[component.name] = component;
         }
 
         // include implied dependencies
@@ -34,9 +31,10 @@ module.exports = function(grunt) {
             for (var dependency in component.dependencies){
                 if (!components[dependency]){
                     var resolved = fileUtils.findComponent(resolvedComponents, dependency);
-                    if (resolved ){
-                        components[resolved.name] =resolved;
+                    if (!resolved){
+                        grunt.fail.fatal('Expected component ' + dependency + ' not found.');
                     }
+                    components[resolved.name] =resolved;
                 }
             }
         }

@@ -8,10 +8,10 @@ module.exports = function(grunt) {
         var paths = {},
             path = require('path'),
             fs = require('fs'),
-            jf = require('jsonfile'),
             fileUtils = require('./fileUtils'),
             glooConfig = grunt.config('glooConfig'),
-            components = fileUtils.findComponents(glooConfig.componentFolder);
+            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
+            components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
         // build paths to components. These are used in dev mode only
         if (mode === 'dev'){
@@ -24,33 +24,35 @@ module.exports = function(grunt) {
 
                 if (componentFiles[componentJSFile]){
                     paths[component.name] = component.requirePath + componentFiles[componentJSFile].requirePath;
+                    paths[component.name] = fileUtils.noLeadSlash(paths[component.name]);
                 }
             }
         } else {
-            // in release mode, all components are concatenated into one file, which all components are mapped to
-            for (var i = 0 ; i < glooConfig.components.length ; i ++){
-                var component = path.basename(glooConfig.components[i]);
-                paths[component] = path.join('js', component);
+            // in release mode, all components are concatenated into one file, which all components must be mapped to
+            for (var i = 0 ; i < components.length ; i ++){
+                var component = components[i];
+                paths[component.name] = path.join('js', glooConfig.componentsConcatFile).replace(/\\/g, "/");
+                paths[component.name] = fileUtils.noLeadSlash(paths[component.name]);
             }
         }
 
         // create temp cache folders
-        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'js'));
+        fileUtils.ensureDirectory(path.join(tempFolder, 'js'));
 
         // write component list.
         var glooComponentsFileContent = 'require.config({ paths : ' + JSON.stringify(paths) + ' });';
-        fs.writeFileSync( path.join(glooConfig.tempFolder, 'js', 'require-component-mappings.js'), glooComponentsFileContent);
+        fs.writeFileSync( path.join(tempFolder, 'js', 'require-component-mappings.js'), glooComponentsFileContent);
 
         // if a custom requirejs config exists in project config, add this to own file
         if (glooConfig.requireConfig){
             var requireCustomConfig = "require.config(" + JSON.stringify(glooConfig.requireConfig) + ");";
-            fs.writeFileSync( path.join(glooConfig.tempFolder, 'js', 'require-custom-config.js'), requireCustomConfig);
+            fs.writeFileSync( path.join(tempFolder, 'js', 'require-custom-config.js'), requireCustomConfig);
         }
 
         // if a custom requirejs dev config exists in project config, add this to own file
         if (glooConfig.requireConfigDev){
             var requireCustomConfigDev = "require.config(" + JSON.stringify(glooConfig.requireConfigDev) + ");";
-            fs.writeFileSync( path.join( glooConfig.tempFolder, 'js', 'require-custom-config-dev.js'), requireCustomConfigDev);
+            fs.writeFileSync( path.join( tempFolder, 'js', 'require-custom-config-dev.js'), requireCustomConfigDev);
         }
     });
 

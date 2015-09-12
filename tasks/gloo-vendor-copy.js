@@ -9,23 +9,24 @@ module.exports = function(grunt) {
         var fileUtils = require('./fileUtils'),
             fs = require('fs'),
             glooConfig = grunt.config('glooConfig'),
+            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
             path = require('path'),
             vm = require('vm'),
             os = require('os'),
             util = require('util'),
             sys = require('sys'),
-            components = fileUtils.findComponents(glooConfig.componentFolder);
+            components = fileUtils.findComponents( fileUtils.absolutePath(glooConfig.componentFolder ) );
 
         var requires = [];
 
         for (var i = 0 ; i < components.length ; i ++){
-            var files = fileUtils.getFilesIn(components[i].path);
+            var files = fileUtils.getFilesIn(components[i].diskPath);
             for (var file in files){
 
                 if (files[file].extension !== '.js')
                     continue;
 
-                var  data = fs.readFileSync(files[file].path);
+                var  data = fs.readFileSync(files[file].diskPath);
                 var context = {
                     gloo : {
                         config : function(configs){
@@ -46,13 +47,13 @@ module.exports = function(grunt) {
                 try{
                     vm.runInNewContext(data, context);
                 }catch(ex){
-                    grunt.verbose.writeln(files[file].path + ' failed to load, no require config taken from it.');
+                    grunt.verbose.writeln(files[file].diskPath + ' failed to load, no require config taken from it.');
                 }
             }
         }
 
         // create vendor folder if it doesn't exist
-        var vendorFolder = path.join(glooConfig.releaseFolder, glooConfig.releaseVendorScriptFolder);
+        var vendorFolder = path.join( fileUtils.absolutePath( glooConfig.releaseFolder, glooConfig.releaseVendorScriptFolder) );
         fileUtils.ensureDirectory(vendorFolder);
 
         var releasePathOverwrites ={},
@@ -69,9 +70,12 @@ module.exports = function(grunt) {
 
                     // copy vendor files to global vendor folder, if in release mode
                     if (mode === 'release' && config.toLowerCase() === 'paths'){
-                        var p = path.join(requires[i].component.path, requires[i].configs[config][moduleName] + '.js');
-                        var targetPath = path.join(glooConfig.releaseFolder, glooConfig.releaseVendorScriptFolder);
-                        targetPath = path.join(targetPath, moduleName + '.js');
+
+                        var p = path.join(requires[i].component.diskPath, requires[i].configs[config][moduleName] + '.js');
+
+                        var targetPath = path.join( glooConfig.releaseFolder , glooConfig.releaseVendorScriptFolder, moduleName + '.js');
+                        targetPath = fileUtils.absolutePath(targetPath);
+
                         fs.writeFileSync(targetPath, fs.readFileSync(p));
                         grunt.verbose.writeln('Copied vendor lib ' + moduleName + ' to ' + targetPath);
                     }
@@ -82,8 +86,9 @@ module.exports = function(grunt) {
 
                         // for dev mode, complete the module path (initially it's relative to component folder), it needs to
                         // be relative to webroot.
-                        var p = requires[i].component.path.replace(glooConfig.buildFolder.replace(/\//g, '\\'), '');
-                        devPathOverwrites.paths[moduleName] = path.join(/*devRoot,*/ p, requires[i].configs[config][moduleName]).replace(/\\/g, "/") ;
+                        var p = requires[i].component.requirePath.replace(glooConfig.buildFolder.replace(/\//g, '\\'), '');
+                        devPathOverwrites.paths[moduleName] = path.join( p, requires[i].configs[config][moduleName]).replace(/\\/g, "/") ;
+                        devPathOverwrites.paths[moduleName] = fileUtils.noLeadSlash(devPathOverwrites.paths[moduleName]);
                     } else {
                         // straight copy anything that isn't path
                         releasePathOverwrites[config][moduleName] = requires[i].configs[config][moduleName];
@@ -93,15 +98,15 @@ module.exports = function(grunt) {
             }
         }
 
-        fileUtils.ensureDirectory( path.join(glooConfig.tempFolder, 'js'));
+        fileUtils.ensureDirectory( path.join(tempFolder, 'js'));
 
         // convert json and wrap for file write
         releasePathOverwrites= JSON.stringify(releasePathOverwrites);
         releasePathOverwrites= "require.config(" + releasePathOverwrites + ");" +  os.EOL;
-        fs.writeFileSync( path.join( glooConfig.tempFolder, 'js' ,'require-pathOverrides-release.js'), releasePathOverwrites);
+        fs.writeFileSync( path.join( tempFolder, 'js' ,'require-pathOverrides-release.js'), releasePathOverwrites);
 
         devPathOverwrites= JSON.stringify(devPathOverwrites);
         devPathOverwrites= "require.config(" + devPathOverwrites + ");" +  os.EOL;
-        fs.writeFileSync( path.join( glooConfig.tempFolder, 'js', 'require-pathOverrides-dev.js'), devPathOverwrites);
+        fs.writeFileSync( path.join( tempFolder, 'js', 'require-pathOverrides-dev.js'), devPathOverwrites);
     })
 };

@@ -12,22 +12,25 @@ module.exports = function(grunt) {
         var fs = require('fs'),
             path = require('path'),
             glooConfig = grunt.config('glooConfig'),
-            dir = glooConfig.masterJSFolder,
-            os = require('os'),
             fileUtils = require('./fileUtils'),
-            pageBase = fs.readFileSync(path.join(glooConfig.tempFolder, 'js', 'pagescript-requirejs-config.js')),
-            glooEmpty = fs.readFileSync( path.join('tasks', 'script-glooEmpty.js')),
+            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
+            dir = fileUtils.absolutePath(glooConfig.masterJSFolder),
+            os = require('os'),
+            pageBase = fs.readFileSync( path.join(tempFolder, 'js', 'pagescript-requirejs-config.js') ),
+            glooEmpty = fs.readFileSync( fileUtils.absolutePath ( path.join('tasks', 'script-glooEmpty.js') ) ),
             destinationFolder = mode === 'dev' ? glooConfig.buildFolder : glooConfig.releaseFolder,
             pageScriptPaths = fs.readdirSync(dir);
 
-        for (var i = 0 ; i < pageScriptPaths.length ; i ++){
+        destinationFolder = fileUtils.absolutePath(destinationFolder);
+
+        for (var i = 0 ; i < pageScriptPaths.length ; i ++) {
 
             var pageScriptPath = pageScriptPaths[i],
                 pageScript = fs.readFileSync(path.join(dir, pageScriptPath)).toString();
 
             // add overrides
             var requireOverrides = '',
-                requireOverridesPath = path.join(glooConfig.tempFolder, 'js', 'require-pathOverrides-dev.js');
+                requireOverridesPath = path.join(tempFolder, 'js', 'require-pathOverrides-dev.js');
 
             if (fs.existsSync(requireOverridesPath)){
                 requireOverrides = fs.readFileSync(requireOverridesPath).toString();

@@ -112,7 +112,7 @@ module.exports = function(grunt) {
             base : {
                 // js components will be added to this dynamically by transform-js task
                 src : [],
-                dest: '<%=glooConfig.releaseFolder %>/js/gloo-components.js'
+                dest: '<%=glooConfig.releaseFolder %>/js/<%=glooConfig.componentsConcatFile %>.js'
             },
             pages : {
                 // js components will be added to this dynamically by transform-js task
@@ -141,13 +141,12 @@ module.exports = function(grunt) {
     grunt.loadTasks('tasks');
 
     grunt.registerTask('default', ['dev']);
-    grunt.registerTask('init', ['gloo-bower-components']);
+    grunt.registerTask('init', ['gloo-bower-update']);
     grunt.registerTask('update', ['auto_install', 'copy:update']);
     grunt.registerTask('dev', [
         'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
-        'gloo-resolve-components',
         'gloo-check-versions',
         'gloo-build-require-configs:' + mode,
         'gloo-build-js-concat-list:' + mode,
@@ -163,7 +162,6 @@ module.exports = function(grunt) {
         'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
-        'gloo-resolve-components',
         'gloo-check-versions',
         'gloo-build-require-configs:' + mode,
         'gloo-build-js-concat-list:' + mode,
