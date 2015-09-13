@@ -1,9 +1,24 @@
- /*
-* Gloo gruntfile. Don't modify this file unless you want to change the way Gloo behaves.
-* Useage :
-* Tasks : dev|release. default is dev
-* Additional commands : --gloo JSON, where JSON is a JSON string of GlooConfig overrides.
-* */
+/*
+ * Gloo gruntfile. Don't modify this file unless you want to change the way Gloo behaves.
+ *
+ * Supported tasks : dev|release|update|init. Default is dev.
+ *
+ * dev : Builds site in dev mode. Gloo component javascript files are not concatenated,
+ *       allowing for easier debugging. Webroot must be the dev folder so javascript files
+ *       have to be nested within in this to be accessible.
+ * release : Builds site in dev mode. Javascript files for Gloo components are concatenated
+ *           and placed in each JS bundle file.
+ * init : Forces a bower install on all Gloo components with a "bower.json" file in their
+ *        root. Use this to ensure that dependencies within components are present.
+ * update : Downloads and overwrites the contents of this folder with the latest version of
+ *          Gloo.
+ *
+ * Additional commands : --gloo JSON, where JSON is a JSON string of GlooConfig overrides.
+ *
+ * Gloo's configuration is stored in local gloo-config.json file. This file can be overriden
+ * by passing in the same JSON stucture with --gloo paramater, or by placing a gloo-config.json
+ * in the parent folder to this folder. If both are used the --gloo parameter option wins.
+ * */
 
 'use strict';
 
@@ -15,9 +30,9 @@ module.exports = function(grunt) {
     if (grunt.option('gloo')){
         try{
             glooConfigOverride = JSON.parse(grunt.option('gloo'));
-            grunt.log.writeln('Using gloo from command line');
+            grunt.log.writeln('Using gloo from command line.');
         } catch(ex){
-            grunt.fail.fatal('--gloo is not valid json.');
+            grunt.fail.fatal('--gloo argument is not valid json.');
         }
     }
 
@@ -26,18 +41,13 @@ module.exports = function(grunt) {
         glooConfig = grunt.file.readJSON('gloo-config.json');
 
 
-    // if config was not passed in as commnandline arg, look for and load user overrides of Gloo settings.
-    // This must be in a file '/work/gloo-settings.json' which we assume is adjacen to to gloo folder
+    // If config was not passed in as commnand line arg, look for and load user overrides of Gloo settings.
+    // This must be in parent folder's 'gloo-settings.json'
     if (!glooConfigOverride){
         glooConfigOverride = fs.existsSync('../gloo-config.json') ? grunt.file.readJSON('../gloo-config.json') : null;
         grunt.log.writeln('Using gloo from gloo-config.json override');
     }
 
-    if (glooConfigOverride){
-        _.extend(glooConfig, glooConfigOverride);
-    } else {
-        grunt.log.writeln('No gloo overrides found. Using default settings.');
-    }
 
     // Set task - allowed options are 'dev' and 'release'. 'dev' is forced if no task is specified.
     var task = grunt.cli.tasks.length > 0 ? grunt.cli.tasks[0] : 'dev',
@@ -97,9 +107,10 @@ module.exports = function(grunt) {
                     { src: [ 'bower_components/requirejs/require.js'], dest : targetBuildFolder + '/lib/require.js', filter: 'isFile' }
                 ]
             },
+            // downloads and installs the latest version of Gloo. If you want a specific version of Gloo you should manually apply that manually.
             update : {
                 files : [
-                    { expand: true, cwd : './selfClone', src: ['**'], dest : './' },
+                    { expand: true, cwd : './bower_components/gloo', src: ['**'], dest : './' }
                 ]
             }
         },
@@ -122,11 +133,23 @@ module.exports = function(grunt) {
 
         },
 
+        shell: {
+            npm: { command: 'npm install' },
+            bower : { command: 'bower install' }
+
+        },
+
         auto_install: {
             local: {}
         }
 
     };
+
+    if (glooConfigOverride){
+        _.extend(glooConfig, glooConfigOverride);
+    } else {
+        grunt.log.writeln('No gloo overrides found. Using default settings.');
+    }
 
     grunt.initConfig(glooConfig);
 
@@ -134,15 +157,14 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-compass');
     grunt.loadNpmTasks('grunt-contrib-copy');
-    grunt.loadNpmTasks('grunt-auto-install');
+    grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('assemble');
     grunt.loadNpmTasks('grunt-bower-task');
-
     grunt.loadTasks('tasks');
 
     grunt.registerTask('default', ['dev']);
     grunt.registerTask('init', ['gloo-bower-update']);
-    grunt.registerTask('update', ['auto_install', 'copy:update']);
+    grunt.registerTask('update', ['shell:bower', 'copy:update', 'shell:npm']);
     grunt.registerTask('dev', [
         'clean:default',
         'bower',
@@ -167,7 +189,6 @@ module.exports = function(grunt) {
         'gloo-build-js-concat-list:' + mode,
         'gloo-build-master-sass',
         'compass',
-        // concat doesnt' always pick up dynamic js files, try to do it as late as possible
         'concat:base',
         'concat:pages',
         'assemble:site',

@@ -1,23 +1,31 @@
-Gloo is a build script and preprocessor for modular frontend end code. It is built on top of Assemble (for markup, RequireJS (for Javascript) and Sass (for CSS). It is written in NodeJS and Grunt. 
+Gloo is a build script for modular frontend end code, running on Grunt. It is built on top of Assemble (for markup, RequireJS (for Javascript) and Sass (for CSS).
 
-Use Gloo to structure your frontend code into folder-based components that have no implied knowledge of eachother. Gloo detects, compiles and "links" your Sass, Handlebar and Javascript dynamically - no module configuration is necessary. If you want one component's Sass to use a mixin, function or variable in another, a simple dependency link ensures the dependent component is compiled first. 
+
+Use Gloo to structure your frontend code into folder-based components that do not require any knowledge of each other.
+Gloo detects, compiles and "links" your Sass, Handlebar and Javascript dynamically - no module configuration is
+necessary. If you want one component's Sass to use a mixin, function or variable in another,
+a simple dependency link ensures the dependent component is compiled first.
 
 Gloo supports semantic version coupling between dependent components.
 
 Gloo supports 3rd party Javascript dependencies within any component with Bower and RequireJS.
 
-**Site Structure**
-------------------
-Ideally you'd start by cloning Gloo, deleting it's .git folder, and then writing your first project in it. Gloo's default structure is
-/gloo : this is where Gloo stores its own scripts etc. Don't put any of you own work in this folder. Grunt and npm in here are private for Gloo, don't modify them.
-/work :  this is where your own work goes, as well as your project's Gloo config files.
-/work/stage: where your development HTML, JS and CSS are rendered. You can serve this with any webserver.
-/work/stage/___components : place your component folders in here. See the section on component structure
-/work/stage/__js : place your own javascripts in here. Gloo expects an app.js file in this, which should be your app start.
-/release : where you final, release-ready website is place, minified, concatenated etc.
+**Getting started**
+-------------------
+- clone Gloo to some folder /myApp/gloo
+- put your Assemble pages, layouts in /myApp/assemble/...
+- create a component folder /myApp/dev/__components/myComponent
+- a component needs a manifest file - create /myApp/dev/__components/myComponent/component.json, with the contents
 
-There is also an Assemble folder
-/work/assemble/.. which contains all the standard folder in an Assemble project.
+  { "version" : "0.0.1" }
+
+- add a sass file /myApp/dev/__components/myComponent/myComponent.sass
+- run /myApp/gloo/grunt
+
+**Demo**
+--------
+Simple website built on Gloo : https://github.com/shukriadams/gloo-demo-basic
+
 
 **Configuration**
 -----------------
