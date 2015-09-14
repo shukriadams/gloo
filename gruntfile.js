@@ -141,6 +141,25 @@ module.exports = function(grunt) {
 
         auto_install: {
             local: {}
+        },
+
+        uglify: {
+            release : {
+                files: [
+                    { cwd: '<%=glooConfig.releaseFolder %>/lib', src: '**/*.js', dest:  '<%=glooConfig.releaseFolder %>/lib', expand: true },
+                    { cwd: '<%=glooConfig.releaseFolder %>/js', src: '**/*.js', dest:  '<%=glooConfig.releaseFolder %>/js', expand: true }
+                ]
+            }
+        },
+
+        cssmin: {
+            release: {
+                expand: true,
+                cwd: '<%=glooConfig.releaseFolder %>/css',
+                src: ['*.css', '!*.min.css'],
+                dest: '<%=glooConfig.releaseFolder %>/css/',
+                ext: '.css'
+            }
         }
 
     };
@@ -157,6 +176,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-compass');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('assemble');
     grunt.loadNpmTasks('grunt-bower-task');
@@ -180,7 +201,7 @@ module.exports = function(grunt) {
         'gloo-build-page-scripts:' + mode,
         'copy:uncompiled'
     ]);
-    grunt.registerTask('release', [
+    var releaseTasks = [
         'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
@@ -193,7 +214,14 @@ module.exports = function(grunt) {
         'concat:pages',
         'assemble:site',
         'gloo-build-page-scripts:' + mode,
-        'copy:compiled'
-    ]);
+        'copy:compiled',
+        'uglify:release',
+        'cssmin:release'
+    ];
+
+    if (!glooConfig.uglify) releaseTasks.unshift('uglify:release');
+    if (!glooConfig.minify) releaseTasks.unshift('cssmin:release');
+
+    grunt.registerTask('release', releaseTasks);
 
 };

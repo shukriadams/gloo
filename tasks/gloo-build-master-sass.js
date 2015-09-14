@@ -146,16 +146,11 @@ module.exports = function(grunt) {
                 componentPath = component.diskPath,
                 componentFileName = path.basename(componentName),
                 componentPathSassPath = componentFileName + '.scss',
-                componentPathSassPathPartial = '_' + componentFileName + '.scss',
                 componentFiles = fileUtils.getFilesIn(componentPath);
 
-            // fail if component file does not exist
-            var sassFilePath = null;
-            if (componentFiles[componentPathSassPath]){
-                sassFilePath =  '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath;
-            } else if (componentFiles[componentPathSassPathPartial]){
-                sassFilePath ='../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPathPartial].relativePath;
-            }
+            var sassFilePath = componentFiles[componentPathSassPath] ?
+                '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath :
+                null;
 
 
             // if component has dependencies file, load file and check validity
@@ -189,14 +184,10 @@ module.exports = function(grunt) {
             if (glooConfig.sassBuildStages){
                 for (var i = 0 ; i < glooConfig.sassBuildStages.length ; i ++){
                     var stage = glooConfig.sassBuildStages[i],
-                        componentPathSassPath = componentFileName + stage + ".scss",
-                        componentPathSassPathPartial = '_' + componentFileName + stage + ".scss";
+                        componentPathSassPath = componentFileName + stage + ".scss";
 
-                    if (componentFiles[componentPathSassPathPartial]){
-                        componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPathPartial].relativePath.replace(/\\/g, "/");
-                    } else {
-                        if (componentFiles[componentPathSassPath])
-                            componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath.replace(/\\/g, "/");
+                    if (componentFiles[componentPathSassPath]){
+                        componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath.replace(/\\/g, "/");
                     }
                 }
             }

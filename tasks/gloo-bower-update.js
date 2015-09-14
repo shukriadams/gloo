@@ -12,17 +12,47 @@ module.exports = function(grunt) {
             path = require('path'),
             sys = require('sys'),
             exec = require('child_process').execSync,
+            jf = require('jsonfile'),
             components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
+        var deps = {};
+
         for (var i = 0 ; i < components.length ; i ++){
-            var folderPath = components[i].diskPath,
+            var component = components[i],
+                folderPath = component.diskPath,
                 bowerPath =  path.join(folderPath, 'bower.json');
 
             if (!fs.existsSync(bowerPath))
                 continue;
 
-            grunt.verbose.writeln('Running bower in ' + folderPath);
+            // gather dependency and dependency version
+            var bowerJson = jf.readFileSync(bowerPath);
+            for (var dep in bowerJson.dependencies){
+                var depName = dep.toLowerCase();
+                deps[depName] = deps[depName] || {};
+                deps[depName][bowerJson.dependencies[depName].toLowerCase()] =
+                    deps[depName][bowerJson.dependencies[depName].toLowerCase()] || [];
+
+                deps[depName][bowerJson.dependencies[dep].toLowerCase()].push(component.name);
+            }
+
+            grunt.log.writeln('Running bower for component ' + component.name);
             exec('bower install', { cwd : folderPath});
+        }
+
+        // ensure dependencies are identical
+        if (glooConfig.checkBowerComponentVersions){
+            for (var dependency in deps){
+                if (Object.keys(deps[dependency]).length > 1){
+                    var failedComponents = '';
+                    for (var d in deps[dependency]){
+                        failedComponents += deps[dependency][d].join(', ');
+                    }
+
+                    grunt.fail.fatal('Bower error : the components ' + failedComponents + ' import different versions of ' + dependency + '.');
+                }
+
+            }
         }
 
     })

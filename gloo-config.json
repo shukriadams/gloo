@@ -8,6 +8,15 @@
   "buildFolder" : "../dev",
   "releaseFolder" : "../release",
 
+  "_comment" : "if true, init will fail if any components bower reference different versions of the same component. ",
+  "checkBowerComponentVersions" : true,
+
+  "_comment" : "Javascript files are uglified. Works in release mode only",
+  "uglify" : true,
+
+  "_comment" : "Css files are minifed. Works in release mode only",
+  "minify" : true,
+
   "_comment" : "In release mode, file component javascript files are concatenated to. Do not add an extension to this.",
   "componentsConcatFile" : "gloo-components",
 

@@ -42,7 +42,7 @@ exports.getFilesIn = function(root){
 
             result[path.basename(item)] = {
                 diskPath : item,            // absolute path of the file on disk
-                requirePath : requirePath,  // PARTIAL a js file needs to path to require. This must be conbined with component require path for a full require path
+                requirePath : requirePath,  // PARTIAL path a js file needs to path to require. This must be combined with component require path for a full require path
                 extension : extension,
                 relativePath : relativePath
             };

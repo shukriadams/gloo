@@ -36,7 +36,7 @@ module.exports = function(grunt) {
                 requireOverrides = fs.readFileSync(requireOverridesPath).toString();
             }
 
-            // add semicolon for safety incase pagePage is not properly terminated
+            // add semicolon for safety in case pagePage is not properly terminated
             pageScript =
                 fileUtils.divider() + os.EOL +
                 glooEmpty + os.EOL +
