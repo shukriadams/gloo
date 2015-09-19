@@ -2,7 +2,8 @@
 *
 * */
 
- 'use strict';
+'use strict';
+
 module.exports = function(grunt) {
     grunt.task.registerTask('gloo-build-require-configs', 'Generates fragments for requirejs config', function(mode) {
         var paths = {},
@@ -31,7 +32,7 @@ module.exports = function(grunt) {
             // in release mode, all components are concatenated into one file, which all components must be mapped to
             for (var i = 0 ; i < components.length ; i ++){
                 var component = components[i];
-                paths[component.name] = path.join('js', glooConfig.componentsConcatFile).replace(/\\/g, "/");
+                paths[component.name] = path.join(glooConfig.jsFolder, glooConfig.componentsConcatFile).replace(/\\/g, "/");
                 paths[component.name] = fileUtils.noLeadSlash(paths[component.name]);
             }
         }

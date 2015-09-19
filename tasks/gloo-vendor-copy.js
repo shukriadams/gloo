@@ -52,14 +52,16 @@ module.exports = function(grunt) {
             }
         }
 
+
+
         // create vendor folder if it doesn't exist
-        var vendorFolder = path.join( fileUtils.absolutePath( glooConfig.releaseFolder, glooConfig.releaseVendorScriptFolder) );
+        var vendorFolder = path.join( fileUtils.absolutePath( glooConfig.releaseFolder) , glooConfig.libFolder );
         fileUtils.ensureDirectory(vendorFolder);
 
         var releasePathOverwrites ={},
             devPathOverwrites ={};
 
-        // copy all declared script files to vender folder
+        // copy all declared script files to vendor folder
         for (var i = 0 ; i < requires.length ; i ++){
             for (var config in requires[i].configs){
 
@@ -73,7 +75,7 @@ module.exports = function(grunt) {
 
                         var p = path.join(requires[i].component.diskPath, requires[i].configs[config][moduleName] + '.js');
 
-                        var targetPath = path.join( glooConfig.releaseFolder , glooConfig.releaseVendorScriptFolder, moduleName + '.js');
+                        var targetPath = path.join( glooConfig.releaseFolder , glooConfig.libFolder, moduleName + '.js');
                         targetPath = fileUtils.absolutePath(targetPath);
 
                         fs.writeFileSync(targetPath, fs.readFileSync(p));
@@ -82,7 +84,7 @@ module.exports = function(grunt) {
 
                     if (config.toLowerCase() === 'paths'){
                         // remap path to release vendor folder
-                        releasePathOverwrites.paths[moduleName] = glooConfig.releaseVendorScriptFolder + '/' + moduleName ;
+                        releasePathOverwrites.paths[moduleName] = glooConfig.libFolder + '/' + moduleName ;
 
                         // for dev mode, complete the module path (initially it's relative to component folder), it needs to
                         // be relative to webroot.

@@ -11,6 +11,7 @@ module.exports = function(grunt) {
             glooConfig = grunt.config('glooConfig'),
             path = require('path'),
             sys = require('sys'),
+            semver = require('semver'),
             exec = require('child_process').execSync,
             jf = require('jsonfile'),
             components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
@@ -40,20 +41,29 @@ module.exports = function(grunt) {
             exec('bower install', { cwd : folderPath});
         }
 
-        // ensure dependencies are identical
+        // ensure dependencies are compatible
         if (glooConfig.checkBowerComponentVersions){
-            for (var dependency in deps){
-                if (Object.keys(deps[dependency]).length > 1){
-                    var failedComponents = '';
-                    for (var d in deps[dependency]){
-                        failedComponents += deps[dependency][d].join(', ');
-                    }
+            for (var dep in deps){
 
-                    grunt.fail.fatal('Bower error : the components ' + failedComponents + ' import different versions of ' + dependency + '.');
+                var componentList = '',
+                    failed = false;
+
+                for (var thisVersion in deps[dep]){
+                    componentList += deps[dep][thisVersion].join(', ');
+                    for (var thatVersion in deps[dep]){
+                        var diff = semver.diff(thisVersion, thatVersion);
+                        if (diff === 'major'){
+                            failed = true;
+                        }
+                    }
                 }
 
+                if (failed){
+                    grunt.fail.fatal('Bower error : the components ' + componentList + ' import different versions of ' + dep + '.');
+                }
             }
         }
 
+        grunt.verbose.writeln('Bower components map : ' + require('util').inspect(deps));
     })
 };

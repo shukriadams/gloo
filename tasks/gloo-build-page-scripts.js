@@ -18,8 +18,14 @@ module.exports = function(grunt) {
             os = require('os'),
             pageBase = fs.readFileSync( path.join(tempFolder, 'js', 'pagescript-requirejs-config.js') ),
             glooEmpty = fs.readFileSync( fileUtils.absolutePath ( path.join('tasks', 'script-glooEmpty.js') ) ),
-            destinationFolder = mode === 'dev' ? glooConfig.buildFolder : glooConfig.releaseFolder,
-            pageScriptPaths = fs.readdirSync(dir);
+            destinationFolder = mode === 'dev' ? glooConfig.buildFolder : glooConfig.releaseFolder;
+
+        if (!fs.existsSync(dir)){
+            grunt.log.writeln('Script directory ' + dir + ' not found, skipping.');
+            return;
+        }
+
+        var pageScriptPaths = fs.readdirSync(dir);
 
         destinationFolder = fileUtils.absolutePath(destinationFolder);
 
@@ -30,11 +36,15 @@ module.exports = function(grunt) {
 
             // add overrides
             var requireOverrides = '',
+                requireOverridesPathRelease = path.join(tempFolder, 'js', 'require-pathOverrides-release.js'),
                 requireOverridesPath = path.join(tempFolder, 'js', 'require-pathOverrides-dev.js');
 
-            if (fs.existsSync(requireOverridesPath)){
+            if (mode === 'dev' && fs.existsSync(requireOverridesPath)){
                 requireOverrides = fs.readFileSync(requireOverridesPath).toString();
+            } else if (mode === 'release' && fs.existsSync(requireOverridesPathRelease)){
+                requireOverrides = fs.readFileSync(requireOverridesPathRelease).toString();
             }
+
 
             // add semicolon for safety in case pagePage is not properly terminated
             pageScript =
@@ -43,14 +53,14 @@ module.exports = function(grunt) {
                 fileUtils.divider() + os.EOL +
                 pageBase + ';' + os.EOL +
                 fileUtils.divider() + os.EOL +
-                pageScript + ';' + os.EOL +
+                requireOverrides + os.EOL +
                 fileUtils.divider() + os.EOL +
-                requireOverrides;
+                pageScript + ';' + os.EOL;
 
-            var targetDirectory = path.join(destinationFolder, 'js');
+            var targetDirectory = path.join(destinationFolder, glooConfig.jsFolder);
             fileUtils.ensureDirectory(targetDirectory);
 
-            var writePath = path.join(destinationFolder, 'js', pageScriptPath);
+            var writePath = path.join(destinationFolder, glooConfig.jsFolder, pageScriptPath);
             fs.writeFileSync(writePath, pageScript );
             grunt.verbose.writeln('Writing pagescript file ' + writePath);
         }

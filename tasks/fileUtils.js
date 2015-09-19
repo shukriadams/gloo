@@ -68,14 +68,19 @@ exports.findComponents = function(root){
 
         var items = fs.readdirSync(dir),
             componentJson = null,
+            bowerJson = null,
             isComponent = false;
 
         // first check for component.json in all files in this folder
         for (var i = 0 ; i < items.length ; i ++){
-            // presence of ocmponent.json file flags folder as component root
+            // presence of component.json file flags folder as component root
             if (items[i].toLowerCase() === 'component.json'){
                 isComponent = true;
                 componentJson = jf.readFileSync(path.join(dir, items[i]));
+            }
+            if (items[i].toLowerCase() === '.bower.json'){
+                isComponent = true;
+                bowerJson = jf.readFileSync(path.join(dir, items[i]));
             }
         }
 
@@ -89,7 +94,7 @@ exports.findComponents = function(root){
             componentFolders.push({
                 relativePath : relativePath,                // path relative to app root
                 diskPath : dir,                     // absolute path of the file on disk
-                version : componentJson.version,
+                version : bowerJson? bowerJson._release : null, // get version from bower file if it exists
                 requirePath : webPath + '/' + path.basename(dir),   //
                 dependencies : componentJson.dependencies || {},
                 name : path.basename(relativePath)
@@ -142,7 +147,9 @@ exports.ensureDirectory = function(path){
 };
 
 
-// builds path bridge from path to point where gloo intersects
+/*
+ * Builds path bridge from path to point where gloo intersects
+ * */
 exports.findIntersect = function(tracePath){
     var path = require('path'),
         output = '';

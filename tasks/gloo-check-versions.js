@@ -12,6 +12,7 @@ module.exports = function(grunt) {
             path = require('path'),
             fileUtils = require('./fileUtils'),
             glooConfig = grunt.config('glooConfig'),
+            semver = require('semver'),
             resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
 
         // create raw list of component sass file paths.
@@ -24,6 +25,7 @@ module.exports = function(grunt) {
         for (var p in components){
             if (!components.hasOwnProperty(p))
                 continue;
+            
             var component = components[p];
             if (!component.dependencies)
                 continue;
@@ -42,6 +44,7 @@ module.exports = function(grunt) {
         // verify versions
         for (var componentName in components){
             for (var componentDependency in components[componentName].dependencies){
+
                 // does dependency exist
                 if (!components[componentDependency]){
                     grunt.fail.fatal('Component ' + componentName + ' depends on component ' + componentDependency + ', but the dependency was not found.');
@@ -51,10 +54,13 @@ module.exports = function(grunt) {
                     availableVersion = components[componentDependency].version;
 
                 if (!availableVersion){
-                    grunt.fail.fatal('Component ' + componentDependency + ' has no version. Please add a version attribute to it\'s component.json file.');
+                    grunt.log.writeln('Component ' + componentDependency + ' has no available version, most likely because it was not fetched with Bower. Skipping.');
+                    continue;
+                    //grunt.fail.fatal('Component ' + componentDependency + ' has no version. Please add a version attribute to it\'s component.json file.');
                 }
 
-                if (requiredVersion !== availableVersion){
+                var diff = semver.diff(availableVersion, requiredVersion);
+                if (diff === 'major'){
                     grunt.fail.fatal('Component ' + componentName + ' depends on ' + componentDependency + ' version ' + requiredVersion + ', but version ' + availableVersion + ' was found.');
                 }
             }

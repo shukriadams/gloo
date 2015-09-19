@@ -1,41 +1,55 @@
 {
-  "componentFolder" : "../dev/__components",
-  "componentJsonFolder" : "",
-  "componentJsFolder" : "",
-  "componentSassFolder" : "",
-  "assembleFolder" : "../assemble",
-  "masterJSFolder" : "../dev/__js",
-  "buildFolder" : "../dev",
-  "releaseFolder" : "../release",
+  "glooConfig" : {
+    "componentFolder" : "../dev/__components",
+    "componentJsonFolder" : "",
+    "componentJsFolder" : "",
+    "componentSassFolder" : "",
+    "assembleFolder" : "../assemble",
+    "masterJSFolder" : "../dev/__js",
+    "buildFolder" : "../dev",
+    "releaseFolder" : "../release",
 
-  "_comment" : "if true, init will fail if any components bower reference different versions of the same component. ",
-  "checkBowerComponentVersions" : true,
+    "_comment" : "relative to build root. Path css files are put in ",
+    "cssFolder" : "css",
 
-  "_comment" : "Javascript files are uglified. Works in release mode only",
-  "uglify" : true,
+    "_comment" : "relative to build root. Path lib files are put in ",
+    "libFolder" : "lib",
+    "_comment" : "refactor this out",
+    "releaseVendorScriptFolder" : "/lib",
 
-  "_comment" : "Css files are minifed. Works in release mode only",
-  "minify" : true,
+    "_comment" : "relative to build root. Path local js files are put in ",
+    "jsFolder": "js",
 
-  "_comment" : "In release mode, file component javascript files are concatenated to. Do not add an extension to this.",
-  "componentsConcatFile" : "gloo-components",
 
-  "_comment" : "Default style sheet output name.",
-  "cssOutputFileName" : "gloo",
+    "_comment" : "if true, init will fail if any components bower reference different versions of the same component. ",
+    "checkBowerComponentVersions" : true,
 
-  "_comment" : "Send modules' css output to specific style sheets if you want to split your site's CSS. Any module not listed here will be sent to the default style sheet.",
-  "cssOutputFiles" : { "myStyleSheet" : [  ] },
+    "_comment" : "Javascript files are uglified. Works in release mode only",
+    "uglify" : true,
 
-  "_comment" : "Set to true to write intermediate css and other logging info to temp folder.",
-  "debug" : false,
+    "_comment" : "Css files are minifed. Works in release mode only",
+    "minify" : true,
 
-  "releaseVendorScriptFolder" : "/lib",
-  "tempFolder" : "temp",
-  "sassBuildStages" : [ "-settings", "-mixins" ],
-  "components":[],
-  "requireConfig" : {
-    "shims": { }
-  },
-  "requireConfigDev" : { },
-  "gruntConfig" : {}
+    "_comment" : "In release mode, file component javascript files are concatenated to. Do not add an extension to this.",
+    "componentsConcatFile" : "gloo-components",
+
+    "_comment" : "Default style sheet output name.",
+    "cssOutputFileName" : "gloo",
+
+    "_comment" : "Send modules' css output to specific style sheets if you want to split your site's CSS. Any module not listed here will be sent to the default style sheet.",
+    "cssOutputFiles" : { "myStyleSheet" : [  ] },
+
+    "_comment" : "Set to true to write intermediate css and other logging info to temp folder.",
+    "debug" : false,
+
+    "tempFolder" : "temp",
+    "sassBuildStages" : [ "-settings", "-mixins" ],
+    "components":[],
+    "requireConfig" : {
+      "shims": { }
+    },
+    "requireConfigDev" : { },
+    "gruntConfig" : {}
+  }
+
 }

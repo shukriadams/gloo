@@ -27,11 +27,12 @@ module.exports = function(grunt) {
             }
 
             // add overrides
+            /*
             var requireOverridesPath = path.join(tempFolder, 'js', 'require-pathOverrides-release.js');
             if (fs.existsSync(requireOverridesPath)){
                 array.push(requireOverridesPath);
             }
-
+            */
 
             // merge array of concat js files with parent gruntfile concat file list
             var merged = array.concat(grunt.config('concat').base.src);
