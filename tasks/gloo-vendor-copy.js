@@ -1,5 +1,5 @@
 /*
- *
+ * Copies vendor files in release mode, resolves paths to vendor files in all modes.
  * */
 
 'use strict';
@@ -15,12 +15,11 @@ module.exports = function(grunt) {
             os = require('os'),
             util = require('util'),
             sys = require('sys'),
-            components = fileUtils.findComponents( fileUtils.absolutePath(glooConfig.componentFolder ) );
-
-        var requires = [];
+            components = fileUtils.findComponents( fileUtils.absolutePath(glooConfig.componentFolder), grunt),
+            requires = [];
 
         for (var i = 0 ; i < components.length ; i ++){
-            var files = fileUtils.getFilesIn(components[i].diskPath);
+            var files = fileUtils.getFilesIn(components[i].diskPath, grunt);
             for (var file in files){
 
                 if (files[file].extension !== '.js')

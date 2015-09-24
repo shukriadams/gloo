@@ -13,7 +13,7 @@ module.exports = function(grunt) {
             fileUtils = require('./fileUtils'),
             glooConfig = grunt.config('glooConfig'),
             semver = require('semver'),
-            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
+            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
 
         // create raw list of component sass file paths.
         for (var i = 0 ; i < resolvedComponents.length ; i ++){

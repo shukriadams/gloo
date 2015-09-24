@@ -1,6 +1,7 @@
 /*
 * Create master sass import list for all component sass files.
 * */
+
 'use strict';
 
 module.exports = function(grunt) {
@@ -16,7 +17,7 @@ module.exports = function(grunt) {
             glooConfig = grunt.config('glooConfig'),
             tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
             pathBridge = fileUtils.findIntersect(fileUtils.absolutePath(glooConfig.componentFolder)),
-            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
+            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
 
         // create raw list of component sass file paths.
         for (var i = 0 ; i < resolvedComponents.length ; i ++){
@@ -146,7 +147,7 @@ module.exports = function(grunt) {
                 componentPath = component.diskPath,
                 componentFileName = path.basename(componentName),
                 componentPathSassPath = componentFileName + '.scss',
-                componentFiles = fileUtils.getFilesIn(componentPath);
+                componentFiles = fileUtils.getFilesIn(componentPath, grunt);
 
             var sassFilePath = componentFiles[componentPathSassPath] ?
                 '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath :

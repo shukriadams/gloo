@@ -13,32 +13,44 @@ module.exports = function(grunt) {
             sys = require('sys'),
             semver = require('semver'),
             exec = require('child_process').execSync,
+            fork = require('child_process').fork,
             jf = require('jsonfile'),
-            components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder));
-
-        var deps = {};
+            deps = {},
+            components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
 
         for (var i = 0 ; i < components.length ; i ++){
             var component = components[i],
                 folderPath = component.diskPath,
                 bowerPath =  path.join(folderPath, 'bower.json');
 
-            if (!fs.existsSync(bowerPath))
-                continue;
-
-            // gather dependency and dependency version
-            var bowerJson = jf.readFileSync(bowerPath);
-            for (var dep in bowerJson.dependencies){
-                var depName = dep.toLowerCase();
-                deps[depName] = deps[depName] || {};
-                deps[depName][bowerJson.dependencies[depName].toLowerCase()] =
-                    deps[depName][bowerJson.dependencies[depName].toLowerCase()] || [];
-
-                deps[depName][bowerJson.dependencies[dep].toLowerCase()].push(component.name);
+            // do npm stuff
+            if (fs.existsSync(path.join(folderPath, 'package.json'))){
+                grunt.log.writeln('Running npm install for component ' + component.name);
+                exec('npm install', { cwd : folderPath, stdio: 'pipe' });
             }
 
-            grunt.log.writeln('Running bower for component ' + component.name);
-            exec('bower install', { cwd : folderPath});
+            // do bower stuff
+            if (fs.existsSync(bowerPath)){
+                // gather dependency and dependency version
+                var bowerJson = jf.readFileSync(bowerPath);
+                for (var dep in bowerJson.dependencies){
+                    var depName = dep.toLowerCase();
+                    deps[depName] = deps[depName] || {};
+                    deps[depName][bowerJson.dependencies[depName].toLowerCase()] =
+                        deps[depName][bowerJson.dependencies[depName].toLowerCase()] || [];
+
+                    deps[depName][bowerJson.dependencies[dep].toLowerCase()].push(component.name);
+                }
+
+                grunt.log.writeln('Running bower for component ' + component.name);
+                exec('bower install', { cwd : folderPath, stdio: 'pipe'});
+            }
+
+            // do make.js stuff
+            if (fs.existsSync(path.join(folderPath, 'make.js'))){
+                grunt.log.writeln('Running make for component ' + component.name);
+                fork('make.js', { cwd : folderPath,  stdio: 'pipe'});
+            }
         }
 
         // ensure dependencies are compatible
@@ -63,6 +75,8 @@ module.exports = function(grunt) {
                 }
             }
         }
+
+
 
         grunt.verbose.writeln('Bower components map : ' + require('util').inspect(deps));
     })

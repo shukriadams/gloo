@@ -26,8 +26,10 @@ module.exports = function(grunt) {
 
     var glooConfigOverride = null,
         fs = require('fs'),
+        startTime = null,
         _ = require("lodash"),
         path = require('path'),
+        isFast = grunt.option('fast') !== undefined,
         baseConfig = grunt.file.readJSON('gloo-config.json');
 
     // look for custom config passed in as command line arg
@@ -65,6 +67,7 @@ module.exports = function(grunt) {
 
         pkg : grunt.file.readJSON('package.json'),
 
+        //
         assemble: {
             options: {
                 flatten: true,
@@ -83,6 +86,7 @@ module.exports = function(grunt) {
             }
         },
 
+        // Compiles sass to css. Sass is built by gloo-build-master-sass task.
         compass: {
             default: {
                 options: {
@@ -92,6 +96,7 @@ module.exports = function(grunt) {
             }
         },
 
+        // Runs Gloo's own bower pull.
         bower: {
             default : {
                 options : {
@@ -100,6 +105,7 @@ module.exports = function(grunt) {
             }
         },
 
+        //
         copy: {
             compiled: {
                 files: [
@@ -120,35 +126,33 @@ module.exports = function(grunt) {
             }
         },
 
+        // Cleans everything in temp folder. This should be fired at start of all tasks to prevent possible outdated data from previous
+        // task polluting the new task.
         clean: {
             default :[ baseConfig.glooConfig.tempFolder + '/**/*.*']
         },
 
+        // Concatenates JS files. "Components" is all component main js files. "Pages" merges each bundle with require config.
+        // In both cases, src array is populated by gloo-build-js-concat-list task.
         concat: {
-            base : {
-                // js components will be added to this dynamically by transform-js task
+            components : {
                 src : [],
                 dest: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.jsFolder, baseConfig.glooConfig.componentsConcatFile+ '.js' )
             },
 
             pages : {
-                // js components will be added to this dynamically by transform-js task
                 src : [],
                 dest: path.join(baseConfig.glooConfig.tempFolder, 'js', 'pagescript-requirejs-config.js' )
             }
 
         },
 
+        // Used by grunt's own update task for own npm/bower
         shell: {
-            npm: { command: 'npm install' },
-            bower : { command: 'bower install' }
-
+            npm: { command: 'npm install' }
         },
 
-        auto_install: {
-            local: {}
-        },
-
+        // Minifies JS files, used in release mode only
         uglify: {
             release : {
                 files: [
@@ -158,6 +162,7 @@ module.exports = function(grunt) {
             }
         },
 
+        // Minifies CSS files, used in release mode only.
         cssmin: {
             release: {
                 expand: true,
@@ -179,6 +184,13 @@ module.exports = function(grunt) {
 
     grunt.initConfig(baseConfig);
 
+    // Calculates gloo execute time.
+    grunt.registerTask('gloo-start', function(){ startTime = new Date();  });
+    grunt.registerTask('gloo-end', function(){
+        var diff = new Date().getTime() - startTime.getTime();
+        console.log('Time elapsed : ' + diff + ' ms');
+    });
+
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-compass');
@@ -186,14 +198,12 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('assemble');
     grunt.loadNpmTasks('grunt-bower-task');
+    grunt.loadNpmTasks('assemble');
     grunt.loadTasks('tasks');
 
-    grunt.registerTask('default', ['dev']);
-    grunt.registerTask('init', ['gloo-bower-update']);
-    grunt.registerTask('update', ['shell:bower', 'copy:update', 'shell:npm']);
-    grunt.registerTask('dev', [
+    var devTasks = [
+        'gloo-start',
         'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
@@ -202,13 +212,21 @@ module.exports = function(grunt) {
         'gloo-build-js-concat-list:' + mode,
         'gloo-build-master-sass',
         'compass',
-        'concat:base',
+        'concat:components',
         'concat:pages',
         'assemble:site',
         'gloo-build-page-scripts:' + mode,
-        'copy:uncompiled'
-    ]);
+        'copy:uncompiled',
+        'gloo-end'
+    ];
+
+    // remove "luxury" safety jobs to speed up building. This is still experimental.
+    if (isFast){
+        devTasks.splice(devTasks.indexOf('bower'), 1);
+    }
+
     var releaseTasks = [
+        'gloo-start',
         'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
@@ -217,15 +235,15 @@ module.exports = function(grunt) {
         'gloo-build-js-concat-list:' + mode,
         'gloo-build-master-sass',
         'compass',
-        'concat:base',
+        'concat:components',
         'concat:pages',
         'assemble:site',
         'gloo-build-page-scripts:' + mode,
         'copy:compiled',
         'uglify:release',
-        'cssmin:release'
+        'cssmin:release',
+        'gloo-end'
     ];
-
 
     if (!baseConfig.glooConfig.uglify){
         releaseTasks.splice(releaseTasks.indexOf('uglify:release'), 1);
@@ -235,6 +253,10 @@ module.exports = function(grunt) {
     }
 
 
+    grunt.registerTask('default', ['dev']);
+    grunt.registerTask('init', ['gloo-bower-update']);
+    grunt.registerTask('update', ['bower', 'copy:update', 'shell:npm']);
+    grunt.registerTask('dev', devTasks);
     grunt.registerTask('release', releaseTasks);
 
 };

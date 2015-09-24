@@ -1,6 +1,9 @@
 /*
  * Divider for prettifying concatenated files
  * */
+
+'use strict';
+
 exports.divider = function(){
   return '// ==================================================================;';
 };
@@ -9,16 +12,33 @@ exports.divider = function(){
 /*
  * Gets a list of all files nested under root folder.
  * */
-exports.getFilesIn = function(root){
+exports.getFilesIn = function(root, grunt){
     var fs = require('fs'),
+        // Files in node and bower folders should not be treated as component files.
+        // Bower files must linked to directly via requirejs definitions
+        ignoredFolders = ['node_modules', 'bower_components'],
         path = require('path'),
         result = {};
 
-    _getFilesIn(root, '');
+    // look for cached component list in grunt object
+    if (grunt){
+        var cachedData = grunt.config('gloo.cache.getFilesIn.' + root);
+        if (cachedData){
+            return cachedData
+        }
+    }
 
+    _getFilesIn(root, '');
+    grunt.config.set('gloo.cache.getFilesIn.' + root, result);
     return result;
 
     function _getFilesIn(currentPath, webPath){
+
+        var folderName = path.basename(currentPath).toLowerCase();
+        if (!! ~ignoredFolders.indexOf(folderName)){
+            return;
+        }
+
         var items = fs.readdirSync(currentPath);
         for (var i = 0 ; i < items.length ; i ++){
             var item = path.join(currentPath, items[i]);
@@ -52,17 +72,29 @@ exports.getFilesIn = function(root){
 
 
 /*
- *  Finds all components under the given root folder. A component is any folder
- *  that contains a 'component.json' file. Components cannot be nested under
- *  other components.
+ *  Returns an array of all components under the given root folder. A component is any folder that contains a
+ *  'component.json' file. Components cannot be nested under other components.
+ *
+ *  Grunt is optional, and used to cache search.
  * */
-exports.findComponents = function(root){
+exports.findComponents = function(root, grunt){
     var fs = require('fs'),
         path = require('path'),
         jf = require('jsonfile'),
         componentFolders = [];
 
+    // look for cached component list in grunt object
+    if (grunt){
+        var cachedData = grunt.config('gloo.cache.findComponents');
+        if (cachedData){
+            return cachedData
+        }
+    }
+
     _findComponentFolders(root, '');
+
+    grunt.config.set('gloo.cache.findComponents', componentFolders);
+    return componentFolders;
 
     function _findComponentFolders(dir, webPath){
 
@@ -79,7 +111,6 @@ exports.findComponents = function(root){
                 componentJson = jf.readFileSync(path.join(dir, items[i]));
             }
             if (items[i].toLowerCase() === '.bower.json'){
-                isComponent = true;
                 bowerJson = jf.readFileSync(path.join(dir, items[i]));
             }
         }
@@ -90,6 +121,8 @@ exports.findComponents = function(root){
             // remove leading slash from path, component name is expected to start with directory name
             if (relativePath.indexOf('/') === 0 || relativePath.indexOf('\\') === 0)
                 relativePath = relativePath.substr(1);
+
+            // todo : add duplicate component name check
 
             componentFolders.push({
                 relativePath : relativePath,                // path relative to app root
@@ -114,10 +147,7 @@ exports.findComponents = function(root){
             }
 
         }
-
     }
-
-    return componentFolders;
 
 };
 
