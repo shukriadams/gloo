@@ -1,15 +1,12 @@
 {
   "name": "Gloo",
-  "ignore": [
-  ],
   "authors": [
     "Shukri Adams <shukri.adams@gmail.com>"
   ],
-    "dependencies": {
-        "requirejs": "~2.1.16",
-        "gloo": "https://github.com/shukriadams/gloo.git"
-    },
+  "dependencies": {
+        "requirejs": "git://github.com/jrburke/requirejs-bower.git#2.1.16"
+  },
   "license": "MIT",
-  "description": "A build script and pattern for frontend modules.",
+  "description": "Assembles and builds modular frontend code",
   "private": false
 }

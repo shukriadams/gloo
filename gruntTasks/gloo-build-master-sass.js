@@ -5,19 +5,19 @@
 'use strict';
 
 module.exports = function(grunt) {
-
     grunt.task.registerTask('gloo-build-master-sass', '', function() {
 
         var components = {},
+            orderedComponents = [],
+            sass = {},
             fs = require('fs'),
             os = require('os'),
             jf = require('jsonfile'),
             fileUtils = require('./fileUtils'),
             path = require('path'),
             glooConfig = grunt.config('glooConfig'),
-            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
-            pathBridge = fileUtils.findIntersect(fileUtils.absolutePath(glooConfig.componentFolder)),
-            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
+            pathBridge = fileUtils.findIntersect(grunt.option('path'),  glooConfig.componentFolder),
+            resolvedComponents = fileUtils.findComponents(glooConfig.componentFolder, grunt);
 
         // create raw list of component sass file paths.
         for (var i = 0 ; i < resolvedComponents.length ; i ++){
@@ -74,7 +74,6 @@ module.exports = function(grunt) {
             }
         }
 
-        var orderedComponents = [];
         for (var p in components){
             if (!components.hasOwnProperty(p))
             continue;
@@ -84,16 +83,15 @@ module.exports = function(grunt) {
             return a.order - b.order;
         });
 
-        fileUtils.ensureDirectory(path.join(tempFolder, 'scss'));
+        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'scss'));
 
         // write debug
         if (glooConfig.debug){
-            jf.writeFileSync( path.join(tempFolder, 'scss', 'gloo-scss-debug.json'), orderedComponents);
+            jf.writeFileSync( path.join(glooConfig.tempFolder, 'scss', 'gloo-scss-debug.json'), orderedComponents);
         }
 
         // build stages
-        var sass = {};
-        sass[glooConfig.cssOutputFileName] = '';
+        sass[glooConfig.cssBundle] = '';
 
         if (glooConfig.sassBuildStages){
             for (var i = 0 ; i < glooConfig.sassBuildStages.length ; i ++){
@@ -103,7 +101,7 @@ module.exports = function(grunt) {
                     if (!component.buildStages[stage])
                         continue;
 
-                    sass[glooConfig.cssOutputFileName] += '@import "' + component.buildStages[stage].replace(/\\/g, "/") + '";' +  os.EOL;
+                    sass[glooConfig.cssBundle] += '@import "' + component.buildStages[stage].replace(/\\/g, "/") + '";' +  os.EOL;
                 }
             }
         }
@@ -113,10 +111,10 @@ module.exports = function(grunt) {
             var orderedComponent = orderedComponents[i];
 
             // try to find a css target file for component
-            var cssOutFile = glooConfig.cssOutputFileName;
-            for (var p in glooConfig.cssOutputFiles){
-                for (var j = 0 ; j < glooConfig.cssOutputFiles[p].length; j ++ ){
-                    if (glooConfig.cssOutputFiles[p][j] === orderedComponent.name){
+            var cssOutFile = glooConfig.cssBundle;
+            for (var p in glooConfig.cssBundles){
+                for (var j = 0 ; j < glooConfig.cssBundles[p].length; j ++ ){
+                    if (glooConfig.cssBundles[p][j] === orderedComponent.name){
                         cssOutFile = p;
                         break;
                     }
@@ -131,40 +129,36 @@ module.exports = function(grunt) {
 
 
         // create temp cache folders
-        fileUtils.ensureDirectory(path.join(tempFolder, 'scss'));
+        fileUtils.ensureDirectory(path.join(glooConfig.tempFolder, 'scss'));
 
         // write master sass import file
         for (var sassOutputfile in sass){
-            fs.writeFileSync( path.join(tempFolder, 'scss', sassOutputfile+ '.scss'), sass[sassOutputfile]);
+            fs.writeFileSync( path.join(glooConfig.tempFolder, 'scss', sassOutputfile+ '.scss'), sass[sassOutputfile]);
         }
 
         // Returns a component object for the given component name. returns null of component
         // main sass file doesn't exist (ie, componentName.scss)
         // Component name must be namespaced relative to the __components folder,
-        // and is the raw value defined in the gloo-config.json master component list.
+        // and is the raw value defined in the gloo.json master component list.
         function resolveComponent(componentName){
             var component = fileUtils.findComponent(resolvedComponents, componentName),
                 componentPath = component.diskPath,
                 componentFileName = path.basename(componentName),
                 componentPathSassPath = componentFileName + '.scss',
-                componentFiles = fileUtils.getFilesIn(componentPath, grunt);
+                componentFiles = fileUtils.getFilesIn(componentPath, grunt),
+                componentDependencies,
+                version,
+                dependenciesFilePath = 'component.json';
 
             var sassFilePath = componentFiles[componentPathSassPath] ?
                 '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath :
                 null;
-
-
-            // if component has dependencies file, load file and check validity
-            var componentDependencies,
-                version,
-                dependenciesFilePath = 'component.json';
 
             if (componentFiles[dependenciesFilePath]){
                 var dependencyFile = grunt.file.readJSON(componentFiles[dependenciesFilePath].diskPath);
                 componentDependencies = dependencyFile.dependencies || {};
                 version = dependencyFile.version;
             }
-
 
             var componentData = {
                 version : version,
@@ -182,14 +176,12 @@ module.exports = function(grunt) {
 
 
             // add sassBuildStages to componentData if job defines any build stages, and component implements any
-            if (glooConfig.sassBuildStages){
-                for (var i = 0 ; i < glooConfig.sassBuildStages.length ; i ++){
-                    var stage = glooConfig.sassBuildStages[i],
-                        componentPathSassPath = componentFileName + stage + ".scss";
+            for (var i = 0 ; i < glooConfig.sassBuildStages.length ; i ++){
+                var stage = glooConfig.sassBuildStages[i],
+                    componentPathSassPath = componentFileName + stage + ".scss";
 
-                    if (componentFiles[componentPathSassPath]){
-                        componentData.buildStages[stage] = '../../../' + pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath.replace(/\\/g, "/");
-                    }
+                 if (componentFiles[componentPathSassPath]){
+                     componentData.buildStages[stage] = '../../../' +  pathBridge + component.relativePath + componentFiles[componentPathSassPath].relativePath.replace(/\\/g, "/");
                 }
             }
 

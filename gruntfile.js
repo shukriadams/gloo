@@ -15,8 +15,8 @@
  *
  * Additional commands : --gloo JSON, where JSON is a JSON string of GlooConfig overrides.
  *
- * Gloo's configuration is stored in local gloo-config.json file. This file can be overriden
- * by passing in the same JSON stucture with --gloo paramater, or by placing a gloo-config.json
+ * Gloo's configuration is stored in local gloo.json file. This file can be overriden
+ * by passing in the same JSON stucture with --gloo paramater, or by placing a gloo.json
  * in the parent folder to this folder. If both are used the --gloo parameter option wins.
  * */
 
@@ -24,46 +24,40 @@
 
 module.exports = function(grunt) {
 
-    var glooConfigOverride = null,
+    var config = null,
         fs = require('fs'),
         startTime = null,
         _ = require("lodash"),
         path = require('path'),
         isFast = grunt.option('fast') !== undefined,
-        baseConfig = grunt.file.readJSON('gloo-config.json');
+        targets = grunt.option('targets'),
+        workingPath = grunt.option('path');
 
-    // look for custom config passed in as command line arg
-    if (grunt.option('gloo')){
-        try{
-            glooConfigOverride = JSON.parse(grunt.option('gloo'));
-            grunt.log.writeln('Using gloo from command line.');
-        } catch(ex){
-            grunt.fail.fatal('--gloo argument is not valid json.');
-        }
+    // get/verify path
+    if (!workingPath)
+        grunt.fail.fatal('Path argument missing.');
+    if (!fs.existsSync(workingPath))
+        grunt.fail.fatal(workingPath + ' is not a valid path.');
+
+    // ensure config is passed in as command line arg
+    if (!grunt.option('config')){
+        grunt.fail.fatal('Missing config JSON.');
     }
 
-    // If config was not passed in as command line arg, look for and load user overrides of Gloo settings.
-    // This must be in parent folder's 'gloo-config.json'
-    if (!glooConfigOverride){
-        glooConfigOverride = fs.existsSync('../gloo-config.json') ? grunt.file.readJSON('../gloo-config.json') : null;
-        grunt.log.writeln('Using gloo from parent folder\'s gloo-config.json override');
-    }
-
-    // first merge - ensures that override settings in baseConfig.glooConfig are available for setting up the grunt config
-    if (glooConfigOverride){
-        _.merge(baseConfig, glooConfigOverride);
-    } else {
-        grunt.log.writeln('No gloo overrides found. Using default settings.');
+    try{
+        config = JSON.parse(grunt.option('config'));
+        grunt.log.writeln('Using gloo from command line.');
+    } catch(ex){
+        grunt.fail.fatal('--config argument is not valid json :' + grunt.option('config') );
     }
 
     // Set task - allowed options are 'dev' and 'release'. 'dev' is forced if no task is specified.
     var task = grunt.cli.tasks.length > 0 ? grunt.cli.tasks[0] : 'dev',
         mode = task === 'release' ? 'release' : 'dev',
-        targetBuildFolder = mode === 'dev'  ? baseConfig.glooConfig.buildFolder : baseConfig.glooConfig.releaseFolder;
-
+        targetBuildFolder = mode === 'dev'  ? config.glooConfig.devRoot : config.glooConfig.releaseRoot;
 
     // second merge : default grunt settings - this will overwrite any grunt settings the caller may have passed in
-    _.merge(baseConfig, {
+    var gruntConfig = {
 
         pkg : grunt.file.readJSON('package.json'),
 
@@ -71,17 +65,17 @@ module.exports = function(grunt) {
         assemble: {
             options: {
                 flatten: true,
-                data: [ baseConfig.glooConfig.componentFolder + '/**/*.{json,yml}', baseConfig.glooConfig.assembleFolder + '/data/**/*.{json,yml}'],
-                layoutdir: baseConfig.glooConfig.assembleFolder + '/layouts',
-                helpers: [ baseConfig.glooConfig.assembleFolder + '/helpers/**/*.js', baseConfig.glooConfig.componentFolder+ '/**/*helper.js']
+                data: [ config.glooConfig.componentFolder + '/**/*.{json,yml}', config.glooConfig.assembleFolder + '/data/**/*.{json,yml}'],
+                layoutdir: config.glooConfig.assembleFolder + '/layouts',
+                helpers: [ config.glooConfig.assembleFolder + '/helpers/**/*.js', config.glooConfig.componentFolder+ '/**/*helper.js']
             },
             site: {
                 options: {
                     // include layouts in partials list to support using multiarea layouts
-                    partials: [ baseConfig.glooConfig.componentFolder + '/**/*.hbs' , baseConfig.glooConfig.assembleFolder + '/partials/**/*.hbs', baseConfig.glooConfig.assembleFolder+ '/layouts/**/*.hbs' ]
+                    partials: [ config.glooConfig.componentFolder + '/**/*.hbs' , config.glooConfig.assembleFolder + '/partials/**/*.hbs', config.glooConfig.assembleFolder+ '/layouts/**/*.hbs' ]
                 },
                 files: [
-                    { expand: true, cwd: baseConfig.glooConfig.assembleFolder + '/pages', src: ['**/*.hbs'], dest: targetBuildFolder + '/' }
+                    { expand: true, cwd: config.glooConfig.assembleFolder + '/pages', src: ['**/*.hbs'], dest: targetBuildFolder + '/' }
                 ]
             }
         },
@@ -90,17 +84,8 @@ module.exports = function(grunt) {
         compass: {
             default: {
                 options: {
-                    sassDir: ['temp/scss'],
-                    cssDir : path.join(targetBuildFolder, baseConfig.glooConfig.cssFolder)
-                }
-            }
-        },
-
-        // Runs Gloo's own bower pull.
-        bower: {
-            default : {
-                options : {
-                    copy : false
+                    sassDir: [path.join(config.glooConfig.tempFolder, 'scss')],
+                    cssDir : path.join(targetBuildFolder, config.glooConfig.cssFolder)
                 }
             }
         },
@@ -109,27 +94,16 @@ module.exports = function(grunt) {
         copy: {
             compiled: {
                 files: [
-                    { src: [ 'bower_components/requirejs/require.js'], dest : path.join(targetBuildFolder, baseConfig.glooConfig.libFolder, 'require.js'), filter: 'isFile' },
-                    { src: [ baseConfig.glooConfig.tempFolder + '/js/require-setup.js'], dest : path.join(targetBuildFolder, baseConfig.glooConfig.jsFolder, 'gloo.js'), filter: 'isFile' }
+                    { src: [ 'bower_components/requirejs/require.js'], dest : path.join(targetBuildFolder, config.glooConfig.libFolder, 'require.js'), filter: 'isFile' },
+                    { src: [ config.glooConfig.tempFolder + '/js/require-setup.js'], dest : path.join(targetBuildFolder, config.glooConfig.jsFolder, 'gloo.js'), filter: 'isFile' }
                 ]
             },
             uncompiled: {
                 files: [
-                    { src: [ 'bower_components/requirejs/require.js'], dest : path.join(targetBuildFolder, baseConfig.glooConfig.libFolder, 'require.js'), filter: 'isFile' }
-                ]
-            },
-            // downloads and installs the latest version of Gloo. If you want a specific version of Gloo you should manually apply that manually.
-            update : {
-                files : [
-                    { expand: true, cwd : './bower_components/gloo', src: ['**'], dest : './' }
+                    { src: [ 'bower_components/requirejs/require.js'], dest : path.join(targetBuildFolder, config.glooConfig.libFolder, 'require.js'), filter: 'isFile' }
                 ]
             }
-        },
 
-        // Cleans everything in temp folder. This should be fired at start of all tasks to prevent possible outdated data from previous
-        // task polluting the new task.
-        clean: {
-            default :[ baseConfig.glooConfig.tempFolder + '/**/*.*']
         },
 
         // Concatenates JS files. "Components" is all component main js files. "Pages" merges each bundle with require config.
@@ -137,27 +111,22 @@ module.exports = function(grunt) {
         concat: {
             components : {
                 src : [],
-                dest: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.jsFolder, baseConfig.glooConfig.componentsConcatFile+ '.js' )
+                dest: path.join(config.glooConfig.releaseRoot, config.glooConfig.jsFolder, config.glooConfig.componentJsBundle + '.js' )
             },
 
             pages : {
                 src : [],
-                dest: path.join(baseConfig.glooConfig.tempFolder, 'js', 'pagescript-requirejs-config.js' )
+                dest: path.join(config.glooConfig.tempFolder, 'js', 'pagescript-requirejs-config.js' )
             }
 
-        },
-
-        // Used by grunt's own update task for own npm/bower
-        shell: {
-            npm: { command: 'npm install' }
         },
 
         // Minifies JS files, used in release mode only
         uglify: {
             release : {
                 files: [
-                    { cwd: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.libFolder), src: '**/*.js', dest:  path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.libFolder), expand: true },
-                    { cwd: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.jsFolder), src: '**/*.js', dest:  path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.jsFolder), expand: true }
+                    { cwd: path.join(config.glooConfig.releaseRoot, config.glooConfig.libFolder), src: '**/*.js', dest:  path.join(config.glooConfig.releaseRoot, config.glooConfig.libFolder), expand: true },
+                    { cwd: path.join(config.glooConfig.releaseRoot, config.glooConfig.jsFolder), src: '**/*.js', dest:  path.join(config.glooConfig.releaseRoot, config.glooConfig.jsFolder), expand: true }
                 ]
             }
         },
@@ -166,45 +135,64 @@ module.exports = function(grunt) {
         cssmin: {
             release: {
                 expand: true,
-                cwd: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.cssFolder),
+                cwd: path.join(config.glooConfig.releaseRoot, config.glooConfig.cssFolder),
                 src: ['*.css', '!*.min.css'],
-                dest: path.join(baseConfig.glooConfig.releaseFolder, baseConfig.glooConfig.cssFolder),
+                dest: path.join(config.glooConfig.releaseRoot, config.glooConfig.cssFolder),
                 ext: '.css'
             }
         }
 
-    });
+    };
 
-    // final merge - allows grunt settings passed in to have final say
-    if (glooConfigOverride){
-        _.merge(baseConfig, glooConfigOverride);
-    } else {
-        grunt.log.writeln('No gloo overrides found. Using default settings.');
-    }
+    // final merge - allows grunt settings passed in to overrite the static grunt settings defined above
+    _.merge(gruntConfig, config);
 
-    grunt.initConfig(baseConfig);
+    grunt.initConfig(gruntConfig);
 
     // Calculates gloo execute time.
     grunt.registerTask('gloo-start', function(){ startTime = new Date();  });
     grunt.registerTask('gloo-end', function(){
         var diff = new Date().getTime() - startTime.getTime();
-        console.log('Time elapsed : ' + diff + ' ms');
+        console.log('Time : ' + diff + ' ms');
     });
 
-    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-compass');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('grunt-bower-task');
     grunt.loadNpmTasks('assemble');
-    grunt.loadTasks('tasks');
+    grunt.loadTasks('gruntTasks');
+
+    // pull bower via node object to avoid dependency of host machine having global bower
+    grunt.registerTask('bower', function(){
+        var jf = require('jsonfile'),
+            bower = require('bower'),
+            customBowerConfig = {},
+            done = this.async();
+
+        if(fs.existsSync(path.join(__dirname, '.bowerrc'))){
+            customBowerConfig = jf.readFileSync(path.join(__dirname, '.bowerrc'));
+        }
+        
+        var bowerFile = jf.readFileSync(path.join(__dirname, 'bower.json')),
+            bowerPackages = [];
+
+        for (var d in bowerFile.dependencies){
+            // note : this assumes bower package contains urls to repos
+            bowerPackages.push(bowerFile.dependencies[d]);
+        }
+
+        bower.commands
+            .install(bowerPackages, { save: false, forceLatest: true }, customBowerConfig)
+            .on('end', function () {
+                done();
+            });
+    });
 
     var devTasks = [
         'gloo-start',
-        'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
         'gloo-check-versions',
@@ -220,6 +208,21 @@ module.exports = function(grunt) {
         'gloo-end'
     ];
 
+    var devWatchTasks = [
+        'gloo-start',
+        'compass',
+        'assemble:site',
+        'gloo-end'
+    ];
+
+    if (targets){
+        if (targets.indexOf('hbs') === -1)
+            devWatchTasks.splice(devWatchTasks.indexOf('assemble:site'), 1);
+        if (targets.indexOf('scss') === -1){
+            devWatchTasks.splice(devWatchTasks.indexOf('compass'), 1);
+        }
+    }
+
     // remove "luxury" safety jobs to speed up building. This is still experimental.
     if (isFast){
         devTasks.splice(devTasks.indexOf('bower'), 1);
@@ -227,7 +230,6 @@ module.exports = function(grunt) {
 
     var releaseTasks = [
         'gloo-start',
-        'clean:default',
         'bower',
         'gloo-vendor-copy:' + mode,
         'gloo-check-versions',
@@ -245,18 +247,18 @@ module.exports = function(grunt) {
         'gloo-end'
     ];
 
-    if (!baseConfig.glooConfig.uglify){
+    if (!config.glooConfig.uglify){
         releaseTasks.splice(releaseTasks.indexOf('uglify:release'), 1);
     }
-    if (!baseConfig.glooConfig.minify){
+    if (!config.glooConfig.minify){
         releaseTasks.splice(releaseTasks.indexOf('cssmin:release'), 1);
     }
 
 
     grunt.registerTask('default', ['dev']);
     grunt.registerTask('init', ['gloo-bower-update']);
-    grunt.registerTask('update', ['bower', 'copy:update', 'shell:npm']);
     grunt.registerTask('dev', devTasks);
+    grunt.registerTask('devf', devWatchTasks);
     grunt.registerTask('release', releaseTasks);
 
 };

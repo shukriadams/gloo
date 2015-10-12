@@ -13,12 +13,11 @@ module.exports = function(grunt) {
             path = require('path'),
             glooConfig = grunt.config('glooConfig'),
             fileUtils = require('./fileUtils'),
-            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
-            dir = fileUtils.absolutePath(glooConfig.masterJSFolder),
+            dir = glooConfig.masterJSFolder,
             os = require('os'),
-            pageBase = fs.readFileSync( path.join(tempFolder, 'js', 'pagescript-requirejs-config.js') ),
-            glooEmpty = fs.readFileSync( fileUtils.absolutePath ( path.join('tasks', 'script-glooEmpty.js') ) ),
-            destinationFolder = mode === 'dev' ? glooConfig.buildFolder : glooConfig.releaseFolder;
+            pageBase = fs.readFileSync( path.join(glooConfig.tempFolder, 'js', 'pagescript-requirejs-config.js') ),
+            glooEmpty = fs.readFileSync(  path.join( __dirname, '..', 'gruntTasks', 'script-glooEmpty.js') ),
+            destinationFolder = mode === 'dev' ? glooConfig.devRoot : glooConfig.releaseRoot;
 
         if (!fs.existsSync(dir)){
             grunt.log.writeln('Script directory ' + dir + ' not found, skipping.');
@@ -27,8 +26,6 @@ module.exports = function(grunt) {
 
         var pageScriptPaths = fs.readdirSync(dir);
 
-        destinationFolder = fileUtils.absolutePath(destinationFolder);
-
         for (var i = 0 ; i < pageScriptPaths.length ; i ++) {
 
             var pageScriptPath = pageScriptPaths[i],
@@ -36,8 +33,8 @@ module.exports = function(grunt) {
 
             // add overrides
             var requireOverrides = '',
-                requireOverridesPathRelease = path.join(tempFolder, 'js', 'require-pathOverrides-release.js'),
-                requireOverridesPath = path.join(tempFolder, 'js', 'require-pathOverrides-dev.js');
+                requireOverridesPathRelease = path.join(glooConfig.tempFolder, 'js', 'require-pathOverrides-release.js'),
+                requireOverridesPath = path.join(glooConfig.tempFolder, 'js', 'require-pathOverrides-dev.js');
 
             if (mode === 'dev' && fs.existsSync(requireOverridesPath)){
                 requireOverrides = fs.readFileSync(requireOverridesPath).toString();

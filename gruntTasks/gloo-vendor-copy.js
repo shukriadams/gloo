@@ -6,16 +6,16 @@
 
 module.exports = function(grunt) {
     grunt.task.registerTask('gloo-vendor-copy', '', function(mode) {
+
         var fileUtils = require('./fileUtils'),
             fs = require('fs'),
             glooConfig = grunt.config('glooConfig'),
-            tempFolder = fileUtils.absolutePath(glooConfig.tempFolder),
             path = require('path'),
             vm = require('vm'),
             os = require('os'),
             util = require('util'),
             sys = require('sys'),
-            components = fileUtils.findComponents( fileUtils.absolutePath(glooConfig.componentFolder), grunt),
+            components = fileUtils.findComponents( glooConfig.componentFolder, grunt),
             requires = [];
 
         for (var i = 0 ; i < components.length ; i ++){
@@ -51,14 +51,12 @@ module.exports = function(grunt) {
             }
         }
 
-
-
         // create vendor folder if it doesn't exist
-        var vendorFolder = path.join( fileUtils.absolutePath( glooConfig.releaseFolder) , glooConfig.libFolder );
-        fileUtils.ensureDirectory(vendorFolder);
-
         var releasePathOverwrites ={},
-            devPathOverwrites ={};
+            devPathOverwrites ={},
+            vendorFolder = path.join( glooConfig.releaseRoot, glooConfig.libFolder );
+
+        fileUtils.ensureDirectory(vendorFolder);
 
         // copy all declared script files to vendor folder
         for (var i = 0 ; i < requires.length ; i ++){
@@ -74,8 +72,7 @@ module.exports = function(grunt) {
 
                         var p = path.join(requires[i].component.diskPath, requires[i].configs[config][moduleName] + '.js');
 
-                        var targetPath = path.join( glooConfig.releaseFolder , glooConfig.libFolder, moduleName + '.js');
-                        targetPath = fileUtils.absolutePath(targetPath);
+                        var targetPath = path.join( glooConfig.releaseRoot , glooConfig.libFolder, moduleName + '.js');
 
                         fs.writeFileSync(targetPath, fs.readFileSync(p));
                         grunt.verbose.writeln('Copied vendor lib ' + moduleName + ' to ' + targetPath);
@@ -85,9 +82,8 @@ module.exports = function(grunt) {
                         // remap path to release vendor folder
                         releasePathOverwrites.paths[moduleName] = glooConfig.libFolder + '/' + moduleName ;
 
-                        // for dev mode, complete the module path (initially it's relative to component folder), it needs to
-                        // be relative to webroot.
-                        var p = requires[i].component.requirePath.replace(glooConfig.buildFolder.replace(/\//g, '\\'), '');
+                        // for dev mode, complete the module path (initially it's relative to component folder), it needs to be relative to webroot.
+                        var p = requires[i].component.requirePath.replace(glooConfig.devRoot.replace(/\//g, '\\'), '');
                         devPathOverwrites.paths[moduleName] = path.join( p, requires[i].configs[config][moduleName]).replace(/\\/g, "/") ;
                         devPathOverwrites.paths[moduleName] = fileUtils.noLeadSlash(devPathOverwrites.paths[moduleName]);
                     } else {
@@ -99,15 +95,15 @@ module.exports = function(grunt) {
             }
         }
 
-        fileUtils.ensureDirectory( path.join(tempFolder, 'js'));
+        fileUtils.ensureDirectory( path.join(glooConfig.tempFolder, 'js'));
 
         // convert json and wrap for file write
         releasePathOverwrites= JSON.stringify(releasePathOverwrites);
         releasePathOverwrites= "require.config(" + releasePathOverwrites + ");" +  os.EOL;
-        fs.writeFileSync( path.join( tempFolder, 'js' ,'require-pathOverrides-release.js'), releasePathOverwrites);
+        fs.writeFileSync( path.join( glooConfig.tempFolder, 'js' ,'require-pathOverrides-release.js'), releasePathOverwrites);
 
         devPathOverwrites= JSON.stringify(devPathOverwrites);
         devPathOverwrites= "require.config(" + devPathOverwrites + ");" +  os.EOL;
-        fs.writeFileSync( path.join( tempFolder, 'js', 'require-pathOverrides-dev.js'), devPathOverwrites);
+        fs.writeFileSync( path.join( glooConfig.tempFolder, 'js', 'require-pathOverrides-dev.js'), devPathOverwrites);
     })
 };

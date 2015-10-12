@@ -4,6 +4,8 @@
 
 'use strict';
 
+
+
 exports.divider = function(){
   return '// ==================================================================;';
 };
@@ -32,6 +34,9 @@ exports.getFilesIn = function(root, grunt){
     grunt.config.set('gloo.cache.getFilesIn.' + root, result);
     return result;
 
+
+
+
     function _getFilesIn(currentPath, webPath){
 
         var folderName = path.basename(currentPath).toLowerCase();
@@ -41,7 +46,8 @@ exports.getFilesIn = function(root, grunt){
 
         var items = fs.readdirSync(currentPath);
         for (var i = 0 ; i < items.length ; i ++){
-            var item = path.join(currentPath, items[i]);
+            var item = unixPath(path.join(currentPath, items[i]));
+
             // is directory
             if (fs.statSync(item).isDirectory()){
                 _getFilesIn(item, webPath + '/' + path.basename(item));
@@ -69,6 +75,15 @@ exports.getFilesIn = function(root, grunt){
         }
     }
 };
+
+
+/*
+ * Converts paths to unix format, which is used as standard for all OS's
+ * */
+function unixPath(path){
+    return path.replace(/\\/g, "/");
+};
+exports.unixPath = unixPath;
 
 
 /*
@@ -105,13 +120,16 @@ exports.findComponents = function(root, grunt){
 
         // first check for component.json in all files in this folder
         for (var i = 0 ; i < items.length ; i ++){
+            var item = unixPath(items[i]);
+
             // presence of component.json file flags folder as component root
-            if (items[i].toLowerCase() === 'component.json'){
+            if (item.toLowerCase() === 'component.json'){
                 isComponent = true;
-                componentJson = jf.readFileSync(path.join(dir, items[i]));
+                componentJson = jf.readFileSync(path.join(dir, item));
             }
-            if (items[i].toLowerCase() === '.bower.json'){
-                bowerJson = jf.readFileSync(path.join(dir, items[i]));
+
+            if (item.toLowerCase() === '.bower.json'){
+                bowerJson = jf.readFileSync(path.join(dir, item));
             }
         }
 
@@ -138,7 +156,7 @@ exports.findComponents = function(root, grunt){
             // if not a component, recurse search in subfolders.
             // this prevents components being nested inside other components
             for (var i = 0 ; i < items.length ; i ++){
-                var item = path.join(dir, items[i]);
+                var item = unixPath(path.join(dir, items[i]));
 
                 // subdirectory found, recurse that
                 if (fs.statSync(item).isDirectory()){
@@ -165,6 +183,34 @@ exports.findComponent = function(resolvedComponents, name){
 
 
 /*
+* Resolves the folder path for the given component
+* */
+exports.resolveComponent = function(root, name){
+    var fs = require('fs'),
+        path = require('path');
+
+    return _find(root);
+
+    function _find(dir){
+        var items = fs.readdirSync(dir),
+            dirName = path.basename(dir);
+
+        for (var i = 0 ; i < items.length ; i ++){
+            var item = items[i];
+            if (dirName === name && item.toLowerCase() === 'component.json'){
+                return dir;
+            }
+
+            // subdirectory found, recurse that
+            if (fs.statSync(path.join(dir,item)).isDirectory()){
+                return _find(path.join(dir,item));
+            }
+        }
+    };
+};
+
+
+/*
  * Creates a path if it doesn't exist, regardless of depth.
  * */
 exports.ensureDirectory = function(path){
@@ -180,9 +226,13 @@ exports.ensureDirectory = function(path){
 /*
  * Builds path bridge from path to point where gloo intersects
  * */
-exports.findIntersect = function(tracePath){
+exports.findIntersect = function(cwd, tracePath){
     var path = require('path'),
         output = '';
+
+    // force unix paths
+    cwd = cwd.replace(/\\/g, "/");
+
 
     function split(p){
         var result = [];
@@ -196,7 +246,7 @@ exports.findIntersect = function(tracePath){
         return result;
     }
 
-    var paths = split(__dirname);
+    var paths = split(cwd);
 
     while (true){
 

@@ -1,4 +1,4 @@
-Gloo is a build script for modular frontend end code, running on Grunt. It is built on top of Assemble (for markup, RequireJS (for Javascript) and Sass (for CSS).
+Gloo is a build script for modular frontend end code, implemtend in NodeJS. It uses Assemble (markup), RequireJS (Javascript), Sass (CSS) and some internal Grunt helpers.
 
 
 Use Gloo to structure your frontend code into folder-based components that do not require any knowledge of each other.
@@ -12,7 +12,7 @@ Gloo supports 3rd party Javascript dependencies within any component with Bower 
 
 **Getting started**
 -------------------
-- clone Gloo to some folder /myApp/gloo
+- install Gloo with "npm install -g gloo"
 - put your Assemble pages, layouts in /myApp/assemble/...
 - create a component folder /myApp/dev/__components/myComponent
 - a component needs a manifest file - create /myApp/dev/__components/myComponent/component.json, with the contents
@@ -20,7 +20,8 @@ Gloo supports 3rd party Javascript dependencies within any component with Bower 
   { "version" : "0.0.1" }
 
 - add a sass file /myApp/dev/__components/myComponent/myComponent.sass
-- run /myApp/gloo/grunt
+- run "gloo dev" in your /myApp folder to build your set in dev mode.
+- serve the contents of /dev with whatever web server you prefer.
 
 **Demo**
 --------
@@ -29,7 +30,7 @@ Simple website built on Gloo : https://github.com/shukriadams/gloo-demo-basic
 
 **Configuration**
 -----------------
-Gloo separates configuration from function. Any changes you make to Gloo can be placed outside the /gloo folder in /work/gloo-config as overrides.
+Gloo separates configuration from function. Any changes you make to Gloo can be placed outside the /gloo folder in /work/gloo.json as overrides.
 In this way Gloo can destructively update itself within its own folder, without touching your work.
 
 

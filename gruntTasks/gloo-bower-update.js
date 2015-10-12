@@ -6,6 +6,7 @@
 
 module.exports = function(grunt) {
     grunt.task.registerTask('gloo-bower-update', 'Initializes component bower dependencies', function() {
+
         var fileUtils = require('./fileUtils'),
             fs = require('fs'),
             glooConfig = grunt.config('glooConfig'),
@@ -16,7 +17,7 @@ module.exports = function(grunt) {
             fork = require('child_process').fork,
             jf = require('jsonfile'),
             deps = {},
-            components = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
+            components = fileUtils.findComponents(glooConfig.componentFolder, grunt);
 
         for (var i = 0 ; i < components.length ; i ++){
             var component = components[i],
@@ -54,29 +55,25 @@ module.exports = function(grunt) {
         }
 
         // ensure dependencies are compatible
-        if (glooConfig.checkBowerComponentVersions){
-            for (var dep in deps){
+        for (var dep in deps){
 
-                var componentList = '',
-                    failed = false;
+            var componentList = '',
+                failed = false;
 
-                for (var thisVersion in deps[dep]){
-                    componentList += deps[dep][thisVersion].join(', ');
-                    for (var thatVersion in deps[dep]){
-                        var diff = semver.diff(thisVersion, thatVersion);
-                        if (diff === 'major'){
-                            failed = true;
-                        }
+            for (var thisVersion in deps[dep]){
+                componentList += deps[dep][thisVersion].join(', ');
+                for (var thatVersion in deps[dep]){
+                    var diff = semver.diff(thisVersion, thatVersion);
+                    if (diff === 'major'){
+                        failed = true;
                     }
                 }
+            }
 
-                if (failed){
-                    grunt.fail.fatal('Bower error : the components ' + componentList + ' import different versions of ' + dep + '.');
-                }
+            if (failed){
+                grunt.fail.fatal('Bower error : the components ' + componentList + ' import different versions of ' + dep + '.');
             }
         }
-
-
 
         grunt.verbose.writeln('Bower components map : ' + require('util').inspect(deps));
     })

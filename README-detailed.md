@@ -10,7 +10,7 @@ will automatically detect and compile these components for you.
 
 Config
 ------
-Gloo's default configuration is stored in /gloo-config.json. Under normal use you wouldn't change this file, but pass
+Gloo's default configuration is stored in /gloo.json. Under normal use you wouldn't change this file, but pass
 overrides to Gloo that overwrite the default config values at runtime. You don't have to pass anything - Gloo works out
  of the box, though you have to put content where it expects to find it by default.
 
@@ -18,7 +18,7 @@ overrides to Gloo that overwrite the default config values at runtime. You don't
 
 Call Gloo's grunt with the argument --gloo YOUR-JSON-STRING to override it. 
 
-Passing the same json structure as that in gloo-config will override that file's structure at execution. For example,
+Passing the same json structure as that in gloo.json will override that file's structure at execution. For example,
 the default structure is
 
     {
@@ -43,7 +43,7 @@ https://www.npmjs.com/package/grunt-hub.
 **Override by file**
 
 If you want to start Gloo Grunt directly from the command line, you can pass config overrides to it by copying
-gloo-config.json to the parent folder of /gloo, and putting your overrides in there. For example,
+gloo.json to the parent folder of /gloo, and putting your overrides in there. For example,
 
     {
         "name": "My site",
@@ -136,7 +136,8 @@ Component content files :
 
 Versioning
 ----------
-Components wouldn't be very useful if you couldn't improve on or add to them. But as you change a module, other
-components that depend on it could break. Gloo uses http://bower.io to control dependency linking. Simple add a
+Components wouldn't be very useful if you couldn't improve on or add to them. But as you change a component, other
+components or projects that depend on it could break. Gloo uses http://bower.io to control dependency linking. Add a
 bower.json to your component root and make sure you import your components into your project's component folder with a
-Bower tag link.
+Bower tag link. That way any project would always be able to find the component version that works for it, even if the 
+component has changed. 

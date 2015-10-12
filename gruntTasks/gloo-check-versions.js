@@ -13,7 +13,7 @@ module.exports = function(grunt) {
             fileUtils = require('./fileUtils'),
             glooConfig = grunt.config('glooConfig'),
             semver = require('semver'),
-            resolvedComponents = fileUtils.findComponents(fileUtils.absolutePath(glooConfig.componentFolder), grunt);
+            resolvedComponents = fileUtils.findComponents(glooConfig.componentFolder, grunt);
 
         // create raw list of component sass file paths.
         for (var i = 0 ; i < resolvedComponents.length ; i ++){
@@ -56,7 +56,6 @@ module.exports = function(grunt) {
                 if (!availableVersion){
                     grunt.log.writeln('Component ' + componentDependency + ' has no available version, most likely because it was not fetched with Bower. Skipping.');
                     continue;
-                    //grunt.fail.fatal('Component ' + componentDependency + ' has no version. Please add a version attribute to it\'s component.json file.');
                 }
 
                 var diff = semver.diff(availableVersion, requiredVersion);
