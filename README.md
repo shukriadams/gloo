@@ -1,4 +1,7 @@
-Gloo is a build script for modular frontend end code, running on Grunt. It is built on top of Assemble (for markup, RequireJS (for Javascript) and Sass (for CSS).
+
+**Gloo has been renamed to Lym, is now a NodeJS module, and is continuining at https://github.com/shukriadams/lym.**
+
+Gloo is a build script for modular frontend end code, running on Grunt. It is built on top of Assemble (markup), RequireJS (Javascript) and Sass (CSS).
 
 
 Use Gloo to structure your frontend code into folder-based components that do not require any knowledge of each other.

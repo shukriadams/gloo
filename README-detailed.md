@@ -136,7 +136,8 @@ Component content files :
 
 Versioning
 ----------
-Components wouldn't be very useful if you couldn't improve on or add to them. But as you change a module, other
-components that depend on it could break. Gloo uses http://bower.io to control dependency linking. Simple add a
+Components wouldn't be very useful if you couldn't improve on or add to them. But as you change a component, other
+components or projects that depend on it could break. Gloo uses http://bower.io to control dependency linking. Add a
 bower.json to your component root and make sure you import your components into your project's component folder with a
-Bower tag link.
+Bower tag link. That way any project would always be able to find the component version that works for it, even if the 
+component has changed. 
